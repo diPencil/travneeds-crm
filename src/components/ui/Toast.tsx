@@ -19,7 +19,7 @@ export const Toast: React.FC<ToastProps> = ({
   title,
   message,
   duration = 5000,
-  onClose
+  onClose,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -47,13 +47,16 @@ export const Toast: React.FC<ToastProps> = ({
     }
   }, [duration, handleClose]);
 
-
   const getIcon = () => {
     switch (type) {
-      case 'success': return <CheckCircle className="h-5 w-5" />;
-      case 'error': return <AlertCircle className="h-5 w-5" />;
-      case 'warning': return <AlertTriangle className="h-5 w-5" />;
-      case 'info': return <Info className="h-5 w-5" />;
+      case 'success':
+        return <CheckCircle className="h-5 w-5" />;
+      case 'error':
+        return <AlertCircle className="h-5 w-5" />;
+      case 'warning':
+        return <AlertTriangle className="h-5 w-5" />;
+      case 'info':
+        return <Info className="h-5 w-5" />;
     }
   };
 
@@ -72,10 +75,14 @@ export const Toast: React.FC<ToastProps> = ({
 
   const getIconColor = () => {
     switch (type) {
-      case 'success': return 'text-green-500';
-      case 'error': return 'text-red-500';
-      case 'warning': return 'text-yellow-500';
-      case 'info': return 'text-blue-500';
+      case 'success':
+        return 'text-green-500';
+      case 'error':
+        return 'text-red-500';
+      case 'warning':
+        return 'text-yellow-500';
+      case 'info':
+        return 'text-blue-500';
     }
   };
 
@@ -86,24 +93,28 @@ export const Toast: React.FC<ToastProps> = ({
         getStyles(),
         isVisible && !isLeaving
           ? 'translate-x-0 opacity-100'
-          : pickDirectionalValue(direction, 'translate-x-full opacity-0', '-translate-x-full opacity-0')
+          : pickDirectionalValue(
+              direction,
+              'translate-x-full opacity-0',
+              '-translate-x-full opacity-0',
+            ),
       )}
     >
-      <div className={pickDirectionalValue(direction, 'flex items-start', 'flex items-start flex-row-reverse text-right')}>
-        <div className={cn('flex-shrink-0', getIconColor())}>
-          {getIcon()}
-        </div>
+      <div
+        className={pickDirectionalValue(
+          direction,
+          'flex items-start',
+          'flex items-start flex-row-reverse text-right',
+        )}
+      >
+        <div className={cn('flex-shrink-0', getIconColor())}>{getIcon()}</div>
         <div className={pickDirectionalValue(direction, 'ml-3 flex-1', 'mr-3 flex-1')}>
-          <p className="text-sm font-medium">
-            {title}
-          </p>
-          {message && (
-            <p className="mt-1 text-sm opacity-90">
-              {message}
-            </p>
-          )}
+          <p className="text-sm font-medium">{title}</p>
+          {message && <p className="mt-1 text-sm opacity-90">{message}</p>}
         </div>
-        <div className={pickDirectionalValue(direction, 'ml-4 flex-shrink-0', 'mr-4 flex-shrink-0')}>
+        <div
+          className={pickDirectionalValue(direction, 'ml-4 flex-shrink-0', 'mr-4 flex-shrink-0')}
+        >
           <button
             onClick={handleClose}
             className="inline-flex rounded-md p-1.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"

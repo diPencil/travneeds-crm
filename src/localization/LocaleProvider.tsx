@@ -72,9 +72,5 @@ export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, [direction, locale]);
 
-  return (
-    <LocaleContext.Provider value={value}>
-      {children}
-    </LocaleContext.Provider>
-  );
+  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 };

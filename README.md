@@ -1,67 +1,68 @@
 # Travneeds CRM
 
-Clean CRM foundation for the Travneeds rebuild.
+Full-stack CRM foundation with a React/TypeScript frontend, Express 5 API and the existing MySQL-compatible `travneeds_crm` database running in XAMPP. Local verification used MariaDB 10.4.32.
+
+## Project references
+
+| Document | Purpose |
+| --- | --- |
+| [AGENTS.md](AGENTS.md) | Engineering instructions and file ownership |
+| [Constitution](docs/constitution.md) | Product boundaries, quality rules and definition of done |
+| [Design system](docs/DESIGN_SYSTEM.md) | Travneeds visual reference and current implementation notes |
+| [ERD](docs/ERD.md) | Implemented schema, invariants and future module boundaries |
+| [Project guide](docs/project-guide.md) | Current implementation status |
+| [Local setup](docs/operations/local-setup.md) | XAMPP, configuration, accounts, migration and startup commands |
+| [API](docs/operations/api.md) | Routes, authorization and request contracts |
+| [Skills](docs/tooling/skills.md) | Installed repositories, versions and tool limitations |
+| [QA report](docs/quality/foundation-verification.md) | Verification evidence and remaining checks |
 
 ## Run locally
 
-Use Node.js 20+ and npm.
+Use Node 22.13+ and npm. Start XAMPP MySQL and use the existing database.
 
-    npm ci
-    npm run dev
+```sh
+npm ci
+npm run setup:local
+npm run db:setup
+npm run db:migrate
+npm run admin:create
+npm run dev
+```
 
-The development server uses Vite's default port 5173.
+The web app is at http://127.0.0.1:5173 and API health is at http://127.0.0.1:3001/api/health. Use the configured origin for login. During local development, Vite proxies `/api` to the backend.
 
-    npm run build
-    npm run typecheck
-    npm run lint
-    npm run preview
+The initial administrator is created interactively using real owner-provided details. There is no demo login or default password. Account creation requires a terminal, a 12–128 character password and password confirmation.
 
-## Current scope
+## Current features
 
-The application retains the login page, public landing page, application shell,
-sidebar, header, shared UI, toast notifications, language switching and appearance
-switching. Old business modules and their mock data have been removed.
+- Database-backed login, server sessions, logout, role checks and personal audit history.
+- Public landing page, protected application shell, Arabic RTL/English LTR and light/dark appearance.
+- Administrator settings for project name, primary color, existing local logo/favicon paths and base currency, with optimistic concurrency protection.
+- Stored exchange-rate display with a real empty state. Source integration and conversion workflow are pending.
+- Visible monthly/annual activation area. The initial license is inactive and serial validation is deferred.
+- Prepared CRM sections for Leads, Customers and Suppliers, plus Finance and User Management. Their business workflows await source-module integration.
 
-The workspace links to empty sections prepared for the next implementation step.
+## Organization and data policy
 
-| Section | Route | Intended scope |
-| --- | --- | --- |
-| Leads | /leads | CRM lead management |
-| Customers | /customers | Customers and corporate accounts |
-| Suppliers | /suppliers | CRM supplier management |
-| Finance | /finance | Payment and booking reports |
-| User Management | /users | Employee and administrator accounts |
-| Settings | /settings | Colors, logo, favicon, project name and currency conversion |
+Frontend features live in `src/modules/<module>/`, backend features in `server/src/modules/<module>/`, and shared transport contracts in `shared/<module>/`. Shared UI and application shell remain under `src/components/`. Supporting documents, migration SQL and operational scripts live under named `docs/` subfolders.
 
-Leads, Customers and Suppliers are grouped under CRM in the sidebar.
-These section routes currently display placeholders. Their business logic,
-persistence and project settings will be implemented during module integration.
+Runtime data comes from MySQL through the API. No sample users, customer records, bookings, revenue figures or exchange rates are seeded. The migration installs technical role codes and actual project configuration, including an inactive licensing record.
 
-Authentication retains the existing demo account.
+Local source projects `web-source/`, `Travneeds-CRM-old-modules/`, and `module-sources/` are excluded from Git and all application build/lint/runtime imports. Future integration starts with selected logic from `web-source/`.
 
-- Email admin@travneeds.com
-- Password password123
+## Verification
 
-## Design reference
+```sh
+npm run check
+npm audit
+```
 
-[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) records the existing Travneeds layouts,
-colors, typography, cards, tables, tabs, forms, states, dark mode, responsive
-behavior and Arabic RTL / English LTR behavior. Shared components remain in
-src/components/ui/.
+The check command verifies Prettier formatting and runs ESLint, frontend/backend type checks, security/foundation tests and both production builds. Local HTTP and MySQL tests require an environment permitting local sockets. Tests keep generated security inputs in memory and do not seed the development database.
 
-## Source projects
-
-web-source/ and Travneeds-CRM-old-modules/ are local reference projects excluded
-from Git and ESLint. Future source projects belong under module-sources/, which
-is also excluded. Only selected, integrated code belongs in the CRM source tree.
-
-The first source for future integration is web-source/. Its framework, server
-services, database schema and permissions must be reviewed with each selected
-module. The current CRM runtime remains React + Vite.
+Build with `npm run build`. Start the compiled API with `npm start`. Serve the browser build separately with a same-origin `/api` reverse proxy. Production requires HTTPS, deployment secrets, backups and process supervision. See the local setup and architecture decision for deployment boundaries.
 
 ## Repository
 
-Configured origin is https://github.com/diPencil/travneeds-crm.git.
+Origin is [diPencil/travneeds-crm](https://github.com/diPencil/travneeds-crm). The clean foundation branch is `codex/clean-foundation`. Old history remains a local recovery reference. Changes in this setup pass are local until explicitly published.
 
-The clean foundation starts on codex/clean-foundation with independent history.
-The old master branch remains a local recovery reference.
+Use npm run format to apply the formatting configuration stored in package.json.

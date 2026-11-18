@@ -8,19 +8,18 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   children: React.ReactNode;
 }
 
-export const Select: React.FC<SelectProps> = ({
-  label,
-  error,
-  className,
-  children,
-  ...props
-}) => {
+export const Select: React.FC<SelectProps> = ({ label, error, className, children, ...props }) => {
   const { direction, isRTL } = useLocale();
 
   return (
     <div className={cn('ui-field space-y-1', isRTL && 'rtl-safe-field')}>
       {label && (
-        <label className={cn('ui-field-label block text-sm font-medium text-gray-700 dark:text-gray-300', isRTL && 'text-right')}>
+        <label
+          className={cn(
+            'ui-field-label block text-sm font-medium text-gray-700 dark:text-gray-300',
+            isRTL && 'text-right',
+          )}
+        >
           {label}
         </label>
       )}
@@ -32,14 +31,21 @@ export const Select: React.FC<SelectProps> = ({
           isRTL && 'text-right',
           'focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200',
           error && 'border-red-500 focus:ring-red-500',
-          className
+          className,
         )}
         {...props}
       >
         {children}
       </select>
       {error && (
-        <p className={cn('ui-field-message text-sm text-red-600 dark:text-red-400', isRTL && 'text-right')}>{error}</p>
+        <p
+          className={cn(
+            'ui-field-message text-sm text-red-600 dark:text-red-400',
+            isRTL && 'text-right',
+          )}
+        >
+          {error}
+        </p>
       )}
     </div>
   );

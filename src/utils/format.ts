@@ -50,24 +50,9 @@ const getIntlLocaleForActiveLocale = (locale?: SupportedLocale) => {
 };
 
 export const formatCurrency = (amount: number, options: CurrencyFormatOptions = {}) => {
-  const {
-    locale,
-    currency = 'USD',
-    minimumFractionDigits,
-    maximumFractionDigits,
-  } = options;
+  const { locale, currency = 'USD', minimumFractionDigits, maximumFractionDigits } = options;
 
   const resolved = resolveLocale(locale);
-
-  if (resolved === 'ar') {
-    // Return stable Western format representation for Arabic mode to avoid bidi reversal issues.
-    // e.g. "US$ 284,500"
-    const formattedNum = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: minimumFractionDigits ?? 0,
-      maximumFractionDigits: maximumFractionDigits ?? 2,
-    }).format(amount);
-    return `US$ ${formattedNum}`;
-  }
 
   return new Intl.NumberFormat(getIntlLocale(resolved), {
     style: 'currency',
@@ -80,7 +65,9 @@ export const formatCurrency = (amount: number, options: CurrencyFormatOptions = 
 export const formatDate = (date: string | null | undefined, options: FormatOptions = {}) => {
   if (!date) return 'N/A';
   try {
-    const d = new Date(date);
+    const d = new Date(
+      /^\d{4}-\d{2}-\d{2} \d{2}:/.test(date) ? date.replace(' ', 'T') + 'Z' : date,
+    );
     if (isNaN(d.getTime())) return 'N/A';
     return new Intl.DateTimeFormat(getIntlLocaleForActiveLocale(options.locale), {
       year: 'numeric',
@@ -95,7 +82,9 @@ export const formatDate = (date: string | null | undefined, options: FormatOptio
 export const formatDateTime = (date: string | null | undefined, options: FormatOptions = {}) => {
   if (!date) return 'N/A';
   try {
-    const d = new Date(date);
+    const d = new Date(
+      /^\d{4}-\d{2}-\d{2} \d{2}:/.test(date) ? date.replace(' ', 'T') + 'Z' : date,
+    );
     if (isNaN(d.getTime())) return 'N/A';
     return new Intl.DateTimeFormat(getIntlLocaleForActiveLocale(options.locale), {
       year: 'numeric',
@@ -124,10 +113,4 @@ export const formatPercent = (value: number, options: NumberFormatOptions = {}) 
     maximumFractionDigits: options.maximumFractionDigits ?? 2,
     signDisplay: options.signDisplay,
   }).format(value);
-};
-
-export const generateId = (prefix: string) => {
-  const timestamp = Date.now().toString().slice(-6);
-  const random = Math.random().toString(36).substr(2, 3).toUpperCase();
-  return `${prefix}-${new Date().getFullYear()}-${timestamp}${random}`;
 };

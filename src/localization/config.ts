@@ -6,11 +6,14 @@ export type Direction = 'ltr' | 'rtl';
 export const DEFAULT_LOCALE: SupportedLocale = 'en';
 export const LOCALE_STORAGE_KEY = 'travneeds-locale';
 
-export const LOCALE_META: Record<SupportedLocale, {
-  label: string;
-  direction: Direction;
-  intlLocale: string;
-}> = {
+export const LOCALE_META: Record<
+  SupportedLocale,
+  {
+    label: string;
+    direction: Direction;
+    intlLocale: string;
+  }
+> = {
   en: {
     label: 'English',
     direction: 'ltr',

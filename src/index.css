@@ -1,8 +1,22 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 @layer base {
+  :root {
+    --brand-50: 239 246 255;
+    --brand-100: 219 234 254;
+    --brand-200: 191 219 254;
+    --brand-300: 147 197 253;
+    --brand-400: 96 165 250;
+    --brand-500: 59 130 246;
+    --brand-600: 37 99 235;
+    --brand-700: 29 78 216;
+    --brand-800: 30 64 175;
+    --brand-900: 30 58 138;
+    --brand-950: 23 37 84;
+  }
+
   html.no-transitions,
   html.no-transitions * {
     transition: none !important;
@@ -49,15 +63,20 @@
     -ms-user-select: none;
   }
 
-  html[dir="rtl"] body {
+  html[dir='rtl'] body {
     direction: rtl;
   }
 
-  html[dir="ltr"] body {
+  html[dir='ltr'] body {
     direction: ltr;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display tracking-tight;
   }
 }
@@ -108,40 +127,40 @@
     text-align: start;
   }
 
-  html[dir="rtl"] .page-header {
+  html[dir='rtl'] .page-header {
     @apply sm:flex-row-reverse;
   }
 
-  html[dir="rtl"] .rtl-page-header {
+  html[dir='rtl'] .rtl-page-header {
     direction: rtl;
   }
 
-  html[dir="rtl"] .ui-button {
+  html[dir='rtl'] .ui-button {
     flex-direction: row-reverse;
   }
 
-  html[dir="rtl"] .ui-button > svg,
-  html[dir="rtl"] .ui-button > .lucide {
+  html[dir='rtl'] .ui-button > svg,
+  html[dir='rtl'] .ui-button > .lucide {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
 
-  html[dir="rtl"] .ui-field-label,
-  html[dir="rtl"] .ui-field-message,
-  html[dir="rtl"] .ui-card-header,
-  html[dir="rtl"] .ui-card-content,
-  html[dir="rtl"] .ui-modal-content,
-  html[dir="rtl"] .ui-status-badge {
+  html[dir='rtl'] .ui-field-label,
+  html[dir='rtl'] .ui-field-message,
+  html[dir='rtl'] .ui-card-header,
+  html[dir='rtl'] .ui-card-content,
+  html[dir='rtl'] .ui-modal-content,
+  html[dir='rtl'] .ui-status-badge {
     text-align: right;
   }
 
-  html[dir="rtl"] .ui-field-control {
+  html[dir='rtl'] .ui-field-control {
     text-align: right;
   }
 
-  html[dir="rtl"] .ui-modal-header,
-  html[dir="rtl"] .ui-modal-actions,
-  html[dir="rtl"] .ui-stat-card {
+  html[dir='rtl'] .ui-modal-header,
+  html[dir='rtl'] .ui-modal-actions,
+  html[dir='rtl'] .ui-stat-card {
     direction: rtl;
   }
 
@@ -154,7 +173,7 @@
     @apply w-full text-sm text-left;
   }
 
-  html[dir="rtl"] .table-premium {
+  html[dir='rtl'] .table-premium {
     text-align: right;
   }
 
@@ -162,7 +181,7 @@
     @apply bg-gray-50 dark:bg-gray-800/50 text-[10px] font-bold text-gray-500 uppercase tracking-widest;
   }
 
-  html[dir="rtl"] .table-premium thead {
+  html[dir='rtl'] .table-premium thead {
     @apply tracking-normal;
   }
 
@@ -217,7 +236,7 @@
   text-align: left;
 }
 
-html[dir="rtl"] .table-container {
+html[dir='rtl'] .table-container {
   direction: rtl;
 }
 
@@ -233,6 +252,6 @@ html[dir="rtl"] .table-container {
   transform: scaleX(1);
 }
 
-html[dir="rtl"] .rtl-flip {
+html[dir='rtl'] .rtl-flip {
   transform: scaleX(-1);
 }

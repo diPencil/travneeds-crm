@@ -14,7 +14,7 @@ export const Card: React.FC<CardProps> = ({ children, className, ...props }) => 
       className={cn(
         'ui-card rounded-3xl border-0 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-gray-900',
         isRTL && 'text-right',
-        className
+        className,
       )}
       {...props}
     >
@@ -27,7 +27,14 @@ export const CardHeader: React.FC<CardProps> = ({ children, className, ...props 
   const { isRTL } = useLocale();
 
   return (
-    <div className={cn('ui-card-header border-b border-gray-100 px-6 py-5 dark:border-gray-800', isRTL && 'text-right', className)} {...props}>
+    <div
+      className={cn(
+        'ui-card-header border-b border-gray-100 px-6 py-5 dark:border-gray-800',
+        isRTL && 'text-right',
+        className,
+      )}
+      {...props}
+    >
       {children}
     </div>
   );

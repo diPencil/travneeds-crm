@@ -19,7 +19,11 @@ interface TableActionsDropdownProps {
   triggerIconClassName?: string;
 }
 
-export const TableActionsDropdown: React.FC<TableActionsDropdownProps> = ({ actions, triggerClassName, triggerIconClassName }) => {
+export const TableActionsDropdown: React.FC<TableActionsDropdownProps> = ({
+  actions,
+  triggerClassName,
+  triggerIconClassName,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -31,8 +35,10 @@ export const TableActionsDropdown: React.FC<TableActionsDropdownProps> = ({ acti
 
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-        buttonRef.current && !buttonRef.current.contains(event.target as Node)
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -76,7 +82,7 @@ export const TableActionsDropdown: React.FC<TableActionsDropdownProps> = ({ acti
     }
   }, [isOpen]);
 
-  const visibleActions = actions.filter(a => !a.hidden);
+  const visibleActions = actions.filter((a) => !a.hidden);
   if (visibleActions.length === 0) return null;
 
   const dropdownStyle: React.CSSProperties = {
@@ -104,46 +110,49 @@ export const TableActionsDropdown: React.FC<TableActionsDropdownProps> = ({ acti
           setIsOpen(!isOpen);
         }}
         className={cn(
-          "p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50",
-          triggerClassName
+          'p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50',
+          triggerClassName,
         )}
       >
-        <MoreHorizontal className={cn("h-5 w-5", triggerIconClassName)} />
+        <MoreHorizontal className={cn('h-5 w-5', triggerIconClassName)} />
       </button>
 
-      {isOpen && createPortal(
-        <div
-          ref={dropdownRef}
-          style={dropdownStyle}
-          className="w-48 rounded-xl bg-white dark:bg-gray-800 shadow-xl ring-1 ring-black ring-opacity-5 dark:ring-white/10 focus:outline-none py-1 overflow-hidden"
-        >
-          {visibleActions.map((action, index) => {
-            const Icon = action.icon;
-            const isDanger = action.variant === 'danger';
-            return (
-              <button
-                key={index}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsOpen(false);
-                  action.onClick(e);
-                }}
-                className={cn(
-                  "w-full flex items-center px-4 py-2.5 text-sm transition-colors",
-                  isDanger
-                    ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700",
-                  pickDirectionalValue(direction, 'text-left', 'text-right flex-row-reverse')
-                )}
-              >
-                <Icon className={cn("h-4 w-4", pickDirectionalValue(direction, 'mr-3', 'ml-3'))} />
-                <span className="font-medium">{action.label}</span>
-              </button>
-            );
-          })}
-        </div>,
-        document.body
-      )}
+      {isOpen &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            style={dropdownStyle}
+            className="w-48 rounded-xl bg-white dark:bg-gray-800 shadow-xl ring-1 ring-black ring-opacity-5 dark:ring-white/10 focus:outline-none py-1 overflow-hidden"
+          >
+            {visibleActions.map((action, index) => {
+              const Icon = action.icon;
+              const isDanger = action.variant === 'danger';
+              return (
+                <button
+                  key={index}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsOpen(false);
+                    action.onClick(e);
+                  }}
+                  className={cn(
+                    'w-full flex items-center px-4 py-2.5 text-sm transition-colors',
+                    isDanger
+                      ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700',
+                    pickDirectionalValue(direction, 'text-left', 'text-right flex-row-reverse'),
+                  )}
+                >
+                  <Icon
+                    className={cn('h-4 w-4', pickDirectionalValue(direction, 'mr-3', 'ml-3'))}
+                  />
+                  <span className="font-medium">{action.label}</span>
+                </button>
+              );
+            })}
+          </div>,
+          document.body,
+        )}
     </>
   );
 };

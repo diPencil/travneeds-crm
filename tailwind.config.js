@@ -9,6 +9,12 @@ export default {
         display: ['Outfit', 'sans-serif'],
       },
       colors: {
+        blue: Object.fromEntries(
+          [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((shade) => [
+            shade,
+            `rgb(var(--brand-${shade}) / <alpha-value>)`,
+          ]),
+        ),
         gray: {
           50: '#f9fafb',
           100: '#f3f4f6',
@@ -25,7 +31,7 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-in': 'slideIn 0.3s ease-out',
-        'float': 'float 5s ease-in-out infinite',
+        float: 'float 5s ease-in-out infinite',
         'float-slow': 'floatSlow 7s ease-in-out infinite',
         'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
       },

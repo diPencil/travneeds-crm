@@ -19,7 +19,8 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const { direction } = useLocale();
-  const baseStyles = 'ui-button inline-flex items-center justify-center gap-2 rounded-xl font-bold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 hover:-translate-y-0.5 hover:shadow-md';
+  const baseStyles =
+    'ui-button inline-flex items-center justify-center gap-2 rounded-xl font-bold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 hover:-translate-y-0.5 hover:shadow-md';
 
   const variants = {
     primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
@@ -38,7 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
   let defaultTitle = '';
   if (!props.title && children) {
     let text = '';
-    React.Children.forEach(children, child => {
+    React.Children.forEach(children, (child) => {
       if (typeof child === 'string' || typeof child === 'number') {
         text += child;
       }
@@ -54,22 +55,30 @@ export const Button: React.FC<ButtonProps> = ({
         variants[variant],
         sizes[size],
         (disabled || loading) && 'opacity-50 cursor-not-allowed',
-        className
+        className,
       )}
       disabled={disabled || loading}
       {...props}
     >
       {loading && (
         <svg
-          className={cn(
-            'h-4 w-4 animate-spin',
-            pickDirectionalValue(direction, '-ml-1', '-mr-1')
-          )}
+          className={cn('h-4 w-4 animate-spin', pickDirectionalValue(direction, '-ml-1', '-mr-1'))}
           fill="none"
           viewBox="0 0 24 24"
         >
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
         </svg>
       )}
       {children}

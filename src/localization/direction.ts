@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { Direction } from './config';
 
-export const pickDirectionalValue = <T,>(direction: Direction, ltrValue: T, rtlValue: T): T => {
+export const pickDirectionalValue = <T>(direction: Direction, ltrValue: T, rtlValue: T): T => {
   return direction === 'rtl' ? rtlValue : ltrValue;
 };
 

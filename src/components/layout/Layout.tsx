@@ -11,7 +11,10 @@ export const Layout: React.FC = () => {
   const { direction, rootClassName } = useLocale();
 
   return (
-    <div dir={direction} className={cn('min-h-screen bg-[#F4F7FE] dark:bg-gray-950 overflow-x-clip', rootClassName)}>
+    <div
+      dir={direction}
+      className={cn('min-h-screen bg-[#F4F7FE] dark:bg-gray-950 overflow-x-clip', rootClassName)}
+    >
       <Sidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -27,12 +30,12 @@ export const Layout: React.FC = () => {
         />
       )}
 
-      <div className={cn(
-        'transition-[padding] duration-300 ease-in-out',
-        sidebarCollapsed
-          ? 'ltr:lg:pl-[72px] rtl:lg:pr-[72px]'
-          : 'ltr:lg:pl-64 rtl:lg:pr-64'
-      )}>
+      <div
+        className={cn(
+          'transition-[padding] duration-300 ease-in-out',
+          sidebarCollapsed ? 'ltr:lg:pl-[72px] rtl:lg:pr-[72px]' : 'ltr:lg:pl-64 rtl:lg:pr-64',
+        )}
+      >
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
         <main className="px-4 sm:px-6 py-2 overflow-x-clip">
