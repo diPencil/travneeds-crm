@@ -1,0 +1,238 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer base {
+  html.no-transitions,
+  html.no-transitions * {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  @media (max-width: 639px) {
+    .banner-actions button {
+      width: 2.25rem !important;
+      height: 2.25rem !important;
+      padding: 0 !important;
+      font-size: 0 !important;
+      line-height: 0 !important;
+      gap: 0 !important;
+      border-radius: 0.75rem !important;
+      justify-content: center !important;
+    }
+
+    .banner-actions button svg {
+      margin: 0 !important;
+      width: 1.125rem !important;
+      height: 1.125rem !important;
+      flex-shrink: 0;
+    }
+  }
+
+  html {
+    overflow-x: clip;
+  }
+
+  body {
+    @apply font-sans antialiased text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900;
+  }
+
+  img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  html[dir="rtl"] body {
+    direction: rtl;
+  }
+
+  html[dir="ltr"] body {
+    direction: ltr;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+}
+
+@layer components {
+  /* Standard Labels */
+  .label-xs {
+    @apply text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500;
+  }
+
+  /* Standard Numbers */
+  .stat-value {
+    @apply text-lg font-bold tracking-tight text-gray-900 dark:text-white;
+  }
+
+  /* Descriptions */
+  .description-sm {
+    @apply text-sm text-gray-500 dark:text-gray-400 font-medium;
+  }
+
+  /* Premium Card Style - Light shadow + Hover Stroke */
+  .card-premium {
+    @apply bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800 shadow-sm transition-all duration-300 hover:shadow-md hover:border-blue-500/30 hover:-translate-y-0.5 rounded-xl;
+  }
+
+  /* Standard Page Layouts */
+  .page-container {
+    @apply space-y-6 animate-fade-in;
+  }
+
+  .page-header {
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6;
+  }
+
+  .ui-button {
+    min-inline-size: max-content;
+  }
+
+  .ui-field-label {
+    text-align: start;
+  }
+
+  .ui-field-control {
+    text-align: start;
+  }
+
+  .ui-field-message {
+    text-align: start;
+  }
+
+  html[dir="rtl"] .page-header {
+    @apply sm:flex-row-reverse;
+  }
+
+  html[dir="rtl"] .rtl-page-header {
+    direction: rtl;
+  }
+
+  html[dir="rtl"] .ui-button {
+    flex-direction: row-reverse;
+  }
+
+  html[dir="rtl"] .ui-button > svg,
+  html[dir="rtl"] .ui-button > .lucide {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  html[dir="rtl"] .ui-field-label,
+  html[dir="rtl"] .ui-field-message,
+  html[dir="rtl"] .ui-card-header,
+  html[dir="rtl"] .ui-card-content,
+  html[dir="rtl"] .ui-modal-content,
+  html[dir="rtl"] .ui-status-badge {
+    text-align: right;
+  }
+
+  html[dir="rtl"] .ui-field-control {
+    text-align: right;
+  }
+
+  html[dir="rtl"] .ui-modal-header,
+  html[dir="rtl"] .ui-modal-actions,
+  html[dir="rtl"] .ui-stat-card {
+    direction: rtl;
+  }
+
+  /* Standardized Table Styling */
+  .table-container {
+    @apply overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm;
+  }
+
+  .table-premium {
+    @apply w-full text-sm text-left;
+  }
+
+  html[dir="rtl"] .table-premium {
+    text-align: right;
+  }
+
+  .table-premium thead {
+    @apply bg-gray-50 dark:bg-gray-800/50 text-[10px] font-bold text-gray-500 uppercase tracking-widest;
+  }
+
+  html[dir="rtl"] .table-premium thead {
+    @apply tracking-normal;
+  }
+
+  .table-premium th {
+    @apply px-6 py-4;
+  }
+
+  .table-premium td {
+    @apply px-6 py-4 border-t border-gray-100 dark:border-gray-800;
+  }
+
+  .table-premium tr {
+    @apply hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors;
+  }
+
+  /* Badge Standard */
+  .badge-standard {
+    @apply px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-colors;
+  }
+}
+
+/* Custom Scrollbars for SaaS Feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-200 dark:bg-gray-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-300 dark:bg-gray-600;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.bidi-isolate {
+  unicode-bidi: isolate;
+}
+
+.ltr-value {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+html[dir="rtl"] .table-container {
+  direction: rtl;
+}
+
+.logical-start {
+  text-align: start;
+}
+
+.logical-end {
+  text-align: end;
+}
+
+.rtl-flip {
+  transform: scaleX(1);
+}
+
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
