@@ -63,3 +63,7 @@ An existing owner session was used to inspect the restored dashboard, independen
 The regression check initially failed on missing restored API routes, then passed after implementation. The final suite has 14 passing tests, including protected routes, profile mass-assignment rejection, and notification mutation authentication. Formatting, lint, TypeScript and both builds passed. npm audit reported zero advisories. The chart bundles produce a size warning because the original chart library is restored.
 
 The database check found one existing account, zero profile rows and zero notifications. This restoration did not insert accounts, profile rows, notifications, business KPIs or chart points. Migration 002 adds the required storage only.
+
+## Hostinger startup
+
+Loading `server.js` through CommonJS `require()` reproduced the LiteSpeed startup error locally. After switching the entry file to dynamic import, the same loader returned HTTP 200 for the web root and for `/api/health` with MySQL connected. The full project check passed.

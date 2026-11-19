@@ -2,6 +2,8 @@
 
 Use the GitHub branch containing the production entry file. Use the **Other** preset if **Express** hides the Build command field. Select Node **22.x**, npm, root **./**, build command **npm run build:hostinger** and entry **server.js**. If prompted for a start command, select **npm start**. The build emits `dist/web`, `dist/server` and the matching Chrome Headless Shell in `dist/pdf-browser`. Keep the Node app rooted in the repository so these build directories and the source public assets remain available.
 
+LiteSpeed loads the configured entry file with `require()`. Keep the entry set to `server.js`, which uses dynamic `import()` to start the compiled API. The API checks MySQL and its migrations before opening the HTTP port.
+
 | Environment variable | Value |
 | --- | --- |
 | `NODE_ENV` | `production` |
