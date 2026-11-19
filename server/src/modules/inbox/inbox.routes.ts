@@ -3,7 +3,7 @@ import { Router, raw } from 'express';
 import { z } from 'zod';
 import { rateLimit } from 'express-rate-limit';
 import { inboxChannels } from '../../../../shared/inbox/inbox.contracts.js';
-import { requireCsrf, requireSession } from '../auth/auth.middleware.js';
+import { requireAdmin, requireCsrf, requireSession } from '../auth/auth.middleware.js';
 import { pool } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
 import { readIntegrationCredentials } from '../settings/integrations.service.js';
@@ -11,6 +11,7 @@ import { listThreads, readMessages, readStaffThread, staffThread } from './inbox
 import {
   guestHistory,
   guestMessage,
+  linkInboxCustomer,
   receiveMeta,
   setThreadState,
   staffReply,
@@ -56,6 +57,14 @@ inboxRouter.patch('/:id', requireCsrf, async (request, response) => {
     .refine((value) => value.status || value.readThrough)
     .parse(request.body);
   await setThreadState(response.locals.session.user, z.uuid().parse(request.params.id), input);
+  response.status(204).end();
+});
+inboxRouter.patch('/:id/customer', requireAdmin, requireCsrf, async (request, response) => {
+  const input = z
+    .object({ customerId: numericId.nullable(), previousCustomerId: numericId.nullable() })
+    .strict()
+    .parse(request.body);
+  await linkInboxCustomer(response.locals.session.user, z.uuid().parse(request.params.id), input);
   response.status(204).end();
 });
 inboxRouter.post('/:id/messages', requireCsrf, limiter(30), async (request, response) => {

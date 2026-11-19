@@ -79,7 +79,14 @@ export function CrmActions({
     <TableActionsDropdown
       actions={[
         {
-          label: isRTL ? 'عرض التفاصيل' : 'View Details',
+          label:
+            kind === 'customers'
+              ? isRTL
+                ? 'ملف العميل'
+                : 'Customer File'
+              : isRTL
+                ? 'عرض التفاصيل'
+                : 'View Details',
           icon: Eye,
           onClick: () => navigate(`/${kind}/${record.id}`),
         },

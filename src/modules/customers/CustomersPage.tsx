@@ -238,6 +238,13 @@ export function CustomersPage({ corporate = false }: { corporate?: boolean }) {
                         <div className="text-xs font-bold text-emerald-600">—</div>
                       </td>
                       <td className="text-end">
+                        <Link
+                          to={`/customers/${item.id}`}
+                          aria-label={`${isRTL ? 'ملف العميل' : 'Customer File for'} ${item.fullName}`}
+                          className="me-2 inline-flex rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 dark:bg-blue-950 dark:text-blue-200"
+                        >
+                          {isRTL ? 'الملف' : 'File'}
+                        </Link>
                         {item.status !== 'Suspended' && !item.archivedAt && (
                           <Link
                             to={`/quotations/new?customerId=${item.id}`}

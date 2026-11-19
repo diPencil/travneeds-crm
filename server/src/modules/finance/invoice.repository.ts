@@ -16,8 +16,9 @@ export async function readInvoiceDocument(id: string): Promise<InvoiceDocument> 
     i.customer_email AS customerEmail,i.customer_phone AS customerPhone,i.customer_address AS customerAddress,
     i.issuer_name AS issuerName,i.issuer_logo AS issuerLogo,i.issuer_address AS issuerAddress,i.issuer_contact AS issuerContact,
     i.customer_reference AS reference,i.subtotal,i.discount_amount AS discount,i.tax_rate AS taxRate,i.tax_label AS taxLabel,
-    i.tax_amount AS taxAmount,i.version FROM finance_invoices i
-    LEFT JOIN finance_booking_accounts b ON b.id=i.booking_id WHERE i.id=?`,
+    i.tax_amount AS taxAmount,i.version,CAST(c.customer_id AS CHAR) AS customerId FROM finance_invoices i
+    LEFT JOIN finance_booking_accounts b ON b.id=i.booking_id
+    LEFT JOIN finance_invoice_customers c ON c.invoice_id=i.id WHERE i.id=?`,
     [id],
   );
   if (!rows[0]) throw new HttpError(404, 'NOT_FOUND');
@@ -53,6 +54,31 @@ export async function saveInvoiceContent(
   input: InvoiceInput,
   totals: InvoiceTotals,
 ) {
+  const [[linked]] = await connection.execute<RowDataPacket[]>(
+    'SELECT CAST(customer_id AS CHAR) AS customerId FROM finance_invoice_customers WHERE invoice_id=?',
+    [id],
+  );
+  if (linked && input.customerId && input.customerId !== linked.customerId)
+    throw new HttpError(409, 'INVOICE_CUSTOMER_MISMATCH');
+  const customerId: string | undefined = linked?.customerId ?? input.customerId;
+  if (customerId && input.bookingId) {
+    const [[booking]] = await connection.execute<RowDataPacket[]>(
+      'SELECT CAST(customer_id AS CHAR) AS customerId FROM finance_booking_accounts WHERE id=?',
+      [input.bookingId],
+    );
+    if (booking?.customerId !== customerId) throw new HttpError(409, 'INVOICE_CUSTOMER_MISMATCH');
+  }
+  if (customerId && !linked) {
+    const [[customer]] = await connection.execute<RowDataPacket[]>(
+      "SELECT id FROM customers WHERE id=? AND archived_at IS NULL AND status<>'Suspended' FOR UPDATE",
+      [customerId],
+    );
+    if (!customer) throw new HttpError(400, 'CUSTOMER_UNAVAILABLE');
+    await connection.execute(
+      'INSERT INTO finance_invoice_customers (invoice_id,customer_id) VALUES (?,?)',
+      [id, customerId],
+    );
+  }
   await connection.execute(
     `UPDATE finance_invoices SET booking_id=?,bill_to=?,currency=?,amount=?,document_date=?,due_on=?,
     customer_email=?,customer_phone=?,customer_address=?,issuer_address=?,issuer_contact=?,customer_reference=?,

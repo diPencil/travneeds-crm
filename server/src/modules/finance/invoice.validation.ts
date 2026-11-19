@@ -4,6 +4,10 @@ import { calculateInvoice } from '../../../../shared/finance/invoice-calculation
 const text = (max: number) => z.string().trim().max(max);
 const input = {
   bookingId: z.union([z.literal(''), z.string().regex(/^[1-9]\d{0,18}$/)]),
+  customerId: z
+    .string()
+    .regex(/^[1-9]\d{0,18}$/)
+    .optional(),
   billTo: text(160).min(1),
   customerEmail: z.union([z.literal(''), z.email().max(254)]),
   customerPhone: text(40),

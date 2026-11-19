@@ -91,6 +91,9 @@ test(
   { skip: process.env.CORE_TEST_BROWSER !== '1' },
   async (context) => {
     const origin = new URL(env.APP_ORIGIN);
+    const fileCustomer = await write('post', '/api/crm/customers')
+      .send({ ...customer, fullName: 'Browser file customer' })
+      .expect(201);
     const originalFetch = globalThis.fetch;
     context.mock.method(
       globalThis,
@@ -187,6 +190,15 @@ test(
         await page.locator(`a[href="/inbox?thread=${inboxThreadId}"]`).click();
         await page.waitForSelector('main ::-p-text(Browser inbox contact)', { visible: true });
         await page.waitForSelector('main ::-p-text(Browser incoming message)', { visible: true });
+        await page.goto(new URL('/customers', origin).href, { waitUntil: 'domcontentloaded' });
+        await page
+          .locator('::-p-aria(Customer File for Browser file customer[role="link"])')
+          .click();
+        await page.waitForSelector('main ::-p-text(Browser file customer)', { visible: true });
+        await page.waitForSelector('main table[aria-labelledby="customer-file-section"] tbody tr');
+        await page.locator('nav[aria-label="Customer File"] a[href$="section=bookings"]').click();
+        await page.waitForSelector('main ::-p-text(No matching records)', { visible: true });
+        assert.equal(new URL(page.url()).pathname, `/customers/${fileCustomer.body.id}`);
         await page.goto(new URL('/users', origin).href, { waitUntil: 'domcontentloaded' });
         await page.locator('::-p-aria(Export[role="button"])').click();
         const exportToast = '[role="status"] ::-p-text(Export download started.)';
@@ -416,6 +428,7 @@ test('CRM customer saves persist and concurrent stale edits cannot overwrite eac
     .expect(403);
   await write('patch', `${path}/archive`).send({ version: 2, archived: true }).expect(204);
   await request(app).get(path).set('Cookie', employee.cookie).expect(403);
+  await request(app).get(`${path}/file`).set('Cookie', employee.cookie).expect(403);
   await write('patch', `${path}/archive`).send({ version: 3, archived: false }).expect(204);
 });
 
@@ -700,7 +713,7 @@ test('finance read models preserve decimal totals, refunds, missing costs and cu
 
 test('quotations preserve bilingual source content, require commercial readiness and reject stale or foreign edits', async () => {
   const [customers] = await pool.query<RowDataPacket[]>(
-    'SELECT CAST(id AS CHAR) AS id FROM customers WHERE archived_at IS NULL ORDER BY id LIMIT 1',
+    'SELECT CAST(converted_customer_id AS CHAR) AS id FROM leads WHERE converted_customer_id IS NOT NULL ORDER BY id LIMIT 1',
   );
   const content = blankQuotation('USD');
   content.title = { en: suffix, ar: 'محتوى اختبار معزول' };
@@ -793,6 +806,10 @@ test('quotations preserve bilingual source content, require commercial readiness
     .set('Cookie', employee.cookie)
     .expect(200);
   assert.equal(emailList.body.total, 0);
+  await pool.execute(
+    "INSERT INTO email_deliveries (id,quotation_share_id,actor_id,request_key,request_digest,recipient_email,subject,status,finished_at) VALUES (?,?,?,?,?,'file@example.invalid','Customer file test','sent',UTC_TIMESTAMP(6))",
+    [randomUUID(), share.body.id, employee.id, randomUUID(), '0'.repeat(64)],
+  );
   await request(app).get('/api/auth/google/link').expect(401);
   const google = await request(app).get('/api/auth/google/availability').expect(200);
   assert.equal(google.body.available, false);
@@ -885,6 +902,75 @@ test('quotations preserve bilingual source content, require commercial readiness
       .set('Cookie', admin.cookie)
       .expect(200);
   assert.equal((await finance()).body.bookings.length, 0);
+  const filePath = `/api/crm/customers/${payload.customerId}/file`;
+  await request(app).get(filePath).expect(401);
+  await request(app)
+    .get('/api/crm/customers/999999999999/file')
+    .set('Cookie', admin.cookie)
+    .expect(404);
+  const readFileSection = (section: string, session = employee) =>
+    request(app).get(`${filePath}/${section}`).set('Cookie', session.cookie);
+  assert.equal((await readFileSection('leads').expect(200)).body.rows.length, 1);
+  const savedQuotes = (await readFileSection('quotations').expect(200)).body.rows;
+  assert.ok(
+    savedQuotes.some(
+      (row: { sharedLinks: number; lastSentAt: string | null }) =>
+        row.sharedLinks === 1 && row.lastSentAt,
+    ),
+  );
+  assert.equal((await readFileSection('inbox').expect(200)).body.rows.length, 2);
+  assert.equal((await readFileSection('emails').expect(200)).body.rows[0].status, 'sent');
+  assert.equal((await readFileSection('bookings').expect(200)).body.rows[0].id, booking.id);
+  await readFileSection('payments').expect(403);
+  await pool.execute(
+    `INSERT INTO finance_payments (booking_id,purpose,status,currency,amount,method,settled_on) VALUES
+      (?,'customer_receipt','verified','USD','15.00','bank',UTC_DATE()),
+      (?,'customer_refund','verified','USD','4.25','bank',UTC_DATE())`,
+    [booking.financeId, booking.financeId],
+  );
+  assert.equal((await readFileSection('payments', admin).expect(200)).body.rows.length, 2);
+  const adminFile = await request(app).get(filePath).set('Cookie', admin.cookie).expect(200);
+  assert.deepEqual(adminFile.body.finance, [{ currency: 'USD', netReceived: '10.75' }]);
+  const basicFile = await request(app).get(filePath).set('Cookie', employee.cookie).expect(200);
+  assert.equal(basicFile.body.finance, null);
+  assert.ok(
+    (await readFileSection('timeline').expect(200)).body.rows.some(
+      (row: { event: string }) => row.event === 'leads.converted',
+    ),
+  );
+  assert.ok(
+    (await readFileSection('timeline', admin).expect(200)).body.rows.some(
+      (row: { category: string }) => row.category === 'payment',
+    ),
+  );
+  await readFileSection('bookings?page=0').expect(400);
+  assert.deepEqual((await readFileSection('bookings?page=2').expect(200)).body.rows, []);
+  const unrelated = await write('post', '/api/crm/customers')
+    .send({ ...customer, fullName: 'Unrelated file customer' })
+    .expect(201);
+  const otherFile = await request(app)
+    .get(`/api/crm/customers/${unrelated.body.id}/file`)
+    .set('Cookie', admin.cookie)
+    .expect(200);
+  assert.deepEqual(otherFile.body.totals, { quotations: 0, bookings: 0, inbox: 0, emails: 0 });
+  await write('patch', `/api/quotations/${other.body.id}`)
+    .send({ ...payload, customerId: unrelated.body.id, version: 1, requestKey: randomUUID() })
+    .expect(200);
+  const historicalFile = (await readFileSection('quotations', admin).expect(200)).body.rows;
+  assert.deepEqual(
+    historicalFile
+      .filter((row: { id: string }) => row.id === other.body.id)
+      .map((row: { version: number }) => row.version),
+    [1],
+  );
+  const newFile = await request(app)
+    .get(`/api/crm/customers/${unrelated.body.id}/file/quotations`)
+    .set('Cookie', admin.cookie)
+    .expect(200);
+  assert.deepEqual(
+    newFile.body.rows.map((row: { version: number }) => row.version),
+    [2],
+  );
   await write('patch', `/api/bookings/${booking.id}/status`, employee)
     .send({ status: 'confirmed', version: 1 })
     .expect(200);
@@ -907,6 +993,7 @@ test('quotations preserve bilingual source content, require commercial readiness
     .expect(200);
   assert.equal(await reporting(), 0);
   const cancelled = await dashboard(employee.cookie);
+  assert.equal((await readFileSection('bookings').expect(200)).body.rows[0].status, 'cancelled');
   assert.equal(cancelled.metrics.bookings, 0);
   assert.equal(cancelled.metrics.confirmedBookings, 0);
   assert.equal(
@@ -1301,6 +1388,30 @@ test('Meta webhooks require a signature, scope incoming messages and deduplicate
     .set('Cookie', employee.cookie)
     .expect(200);
   assert.equal(employeeInbox.body.total, 0);
+  const customerMatch = await write('post', '/api/crm/customers')
+    .send({ ...customer, fullName: 'Linked Messenger customer' })
+    .expect(201);
+  const customerId = customerMatch.body.id;
+  const customerLink = `/api/inbox/${adminInbox.body.threads[0].id}/customer`;
+  const customerInbox = (session = admin) =>
+    request(app)
+      .get(`/api/crm/customers/${customerId}/file/inbox`)
+      .set('Cookie', session.cookie)
+      .expect(200);
+  assert.deepEqual((await customerInbox()).body.rows, []);
+  await write('patch', customerLink, employee)
+    .send({ customerId, previousCustomerId: null })
+    .expect(403);
+  await write('patch', customerLink).send({ customerId, previousCustomerId: null }).expect(204);
+  assert.equal((await customerInbox()).body.rows[0].body, 'Incoming provider message');
+  assert.deepEqual((await customerInbox(employee)).body.rows, []);
+  await write('patch', customerLink)
+    .send({ customerId: null, previousCustomerId: null })
+    .expect(409);
+  await write('patch', customerLink)
+    .send({ customerId: null, previousCustomerId: customerId })
+    .expect(204);
+  assert.deepEqual((await customerInbox()).body.rows, []);
   await request(app)
     .get(`/api/inbox/${adminInbox.body.threads[0].id}`)
     .set('Cookie', employee.cookie)
@@ -1481,6 +1592,23 @@ test('manual invoices persist independently of Trips, validate totals and freeze
     .set('Cookie', admin.cookie)
     .expect(200);
   assert.equal(overview.body.summary.totalAmount, '1000.50');
+  const fileCustomer = await write('post', '/api/crm/customers')
+    .send({ ...customer, fullName: 'Manual invoice customer' })
+    .expect(201);
+  const customerId = fileCustomer.body.id;
+  const manual = await write('post', '/api/finance/invoices')
+    .send({ ...input, customerId, requestKey: randomUUID() })
+    .expect(201);
+  assert.equal(manual.body.invoice.customerId, customerId);
+  assert.equal(manual.body.invoice.bookingId, null);
+  const fileInvoices = await request(app)
+    .get(`/api/crm/customers/${customerId}/file/invoices`)
+    .set('Cookie', admin.cookie)
+    .expect(200);
+  assert.deepEqual(
+    fileInvoices.body.rows.map((row: { id: string }) => row.id),
+    [manual.body.invoice.id],
+  );
 });
 
 test('disabling an account revokes its real sessions and rejects subsequent login', async () => {

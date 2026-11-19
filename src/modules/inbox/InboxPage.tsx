@@ -14,6 +14,7 @@ import { useLocale } from '../../localization/useLocale';
 import { useAuth } from '../auth/useAuth';
 import { useQuotationText } from '../quotations/quotation.labels';
 import { Conversation, type History } from './Conversation';
+import { InboxCustomerLink } from './InboxCustomerLink';
 
 interface Directory {
   threads: InboxThread[];
@@ -168,7 +169,7 @@ function StaffConversation({
 }) {
   const { text } = useQuotationText();
   const { t } = useLocale();
-  const { csrfToken } = useAuth();
+  const { csrfToken, user } = useAuth();
   const { id } = thread;
   const [statusChange, setStatusChange] = useState<typeof thread.status | null>(null);
   const [error, setError] = useState('');
@@ -228,6 +229,13 @@ function StaffConversation({
           </Button>
         </div>
       </header>
+      {thread.channel !== 'web' && user?.roles.includes('admin') && (
+        <InboxCustomerLink
+          threadId={thread.id}
+          customerId={thread.customerId}
+          onSaved={afterChange}
+        />
+      )}
       {error && (
         <p role="alert" className="mb-3 text-rose-600">
           {error}

@@ -1,7 +1,7 @@
 import type { AuthUser } from '../../../../shared/auth/auth.contracts.js';
 import type { PoolConnection, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { z } from 'zod';
-import type { CrmKind, CrmDirectory } from '../../../../shared/crm/crm.contracts.js';
+import type { CrmKind, CrmDirectory, CrmRecord } from '../../../../shared/crm/crm.contracts.js';
 import { pool, transaction } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
 import { customerInput, leadInput, supplierInput, listInput } from './crm.validation.js';
@@ -68,7 +68,7 @@ function joinAssignee(kind: CrmKind) {
   return kind !== 'suppliers' ? 'LEFT JOIN users u ON u.id = r.assigned_user_id' : '';
 }
 export async function readRecord(kind: CrmKind, id: string) {
-  const [rows] = await pool.execute<RowDataPacket[]>(
+  const [rows] = await pool.execute<(RowDataPacket & CrmRecord)[]>(
     `SELECT ${selectColumns(kind)} FROM ${modules[kind].table} r ${joinAssignee(kind)} WHERE r.id = ?`,
     [id],
   );

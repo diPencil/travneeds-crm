@@ -16,7 +16,7 @@ import { readPublicQuotation } from '../quotations/quotation-shares.service.js';
 import { readQuotation } from '../quotations/quotations.repository.js';
 import { smtpTransport } from './smtp.js';
 
-const statusProjection =
+export const statusProjection =
   "CASE WHEN e.status='sending' AND e.created_at<DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 15 MINUTE) THEN 'unknown' ELSE e.status END";
 const from =
   'FROM email_deliveries e JOIN quotation_shares s ON s.id=e.quotation_share_id JOIN quotations q ON q.id=s.quotation_id';

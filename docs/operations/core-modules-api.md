@@ -35,6 +35,8 @@ Employees and administrators share the single-company directories. Only administ
 | GET | /api/crm/options | Active agent id/name, stored categories, configured currency |
 | GET | /api/crm/:kind | Paginated directory and actual metrics |
 | GET | /api/crm/:kind/:id | Persisted details |
+| GET | /api/crm/customers/:id/file | Customer profile and scoped summary, verified net receipts grouped by currency for admins |
+| GET | /api/crm/customers/:id/file/:section | Paginated timeline, leads, quotations, bookings, payments, invoices, inbox or emails, with the same ownership as each module |
 | POST | /api/crm/:kind | Creates record with server-assigned creator |
 | PATCH | /api/crm/:kind/:id | Complete validated details plus version |
 | PATCH | /api/crm/:kind/:id/archive | Admin-only `{version, archived}`; reversible |

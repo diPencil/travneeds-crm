@@ -10,11 +10,12 @@ import { pool } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
 
 const columns = `t.id,t.channel,t.contact_name AS contactName,t.status,t.last_message_at AS lastMessageAt,t.last_inbound_at AS lastInboundAt,
- CAST(s.quotation_id AS CHAR) AS quotationId,
+ CAST(s.quotation_id AS CHAR) AS quotationId,CAST(link.customer_id AS CHAR) AS customerId,
  (SELECT COUNT(*) FROM inbox_messages m WHERE m.thread_id=t.id AND m.direction='incoming' AND m.read_at IS NULL) AS unread`;
-const from = 'FROM inbox_threads t LEFT JOIN quotation_shares s ON s.id=t.quotation_share_id';
+const from = `FROM inbox_threads t LEFT JOIN quotation_shares s ON s.id=t.quotation_share_id
+ LEFT JOIN inbox_customer_links link ON link.thread_id=t.id`;
 
-function threadScope(actor: AuthUser) {
+export function threadScope(actor: AuthUser) {
   return actor.roles.includes('admin')
     ? { clause: '1=1', values: [] }
     : { clause: 't.owner_id=?', values: [actor.id] };

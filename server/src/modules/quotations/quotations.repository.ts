@@ -11,7 +11,7 @@ import type { AuthUser } from '../../../../shared/auth/auth.contracts.js';
 import { pool } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
 
-const actualStatus =
+export const actualStatus =
   "CASE WHEN q.valid_until<UTC_DATE() AND q.status NOT IN ('draft','booked','declined') THEN 'expired' ELSE q.status END";
 const columns = `CAST(q.id AS CHAR) AS id,q.reference,CAST(q.customer_id AS CHAR) AS customerId,c.full_name AS customerName,q.trip_type AS type,
   ${actualStatus} AS status,q.currency,q.total,q.current_version AS version,q.valid_until AS validUntil,q.created_at AS createdAt,q.updated_at AS updatedAt,q.created_by AS createdBy`;

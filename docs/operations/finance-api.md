@@ -12,6 +12,8 @@ The trips source starts pending: status `pending_trips`, empty booking lists, nu
 
 ## Customer invoice writes
 
+An optional numeric `customerId` explicitly links an invoice to a CRM customer. The Customer File opens a manual draft with this identifier. The link is saved transactionally and preserved during edits. If a booking is also supplied, it must belong to the linked customer.
+
 All require administrator sessions, configured Origin and X-CSRF-Token. Shared input/document contracts are in shared/finance/invoice.contracts.ts.
 
 | Method/path | Behavior |

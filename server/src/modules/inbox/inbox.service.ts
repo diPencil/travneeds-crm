@@ -152,6 +152,44 @@ export async function staffReply(actor: AuthUser, id: string, body: string, requ
   );
   return { id: prepared.id, delivery: result.delivery };
 }
+
+export async function linkInboxCustomer(
+  actor: AuthUser,
+  id: string,
+  input: { customerId: string | null; previousCustomerId: string | null },
+) {
+  await transaction(async (connection) => {
+    const thread = await staffThread(connection, actor, id, true);
+    if (thread.channel === 'web') throw new HttpError(409, 'QUOTATION_THREAD_CUSTOMER_FIXED');
+    const [[link]] = await connection.execute<RowDataPacket[]>(
+      'SELECT CAST(customer_id AS CHAR) AS customerId FROM inbox_customer_links WHERE thread_id=?',
+      [id],
+    );
+    const current = link?.customerId ?? null;
+    if (current === input.customerId) return;
+    if (current !== input.previousCustomerId) throw new HttpError(409, 'RECORD_CHANGED');
+    if (input.customerId === null) {
+      await connection.execute('DELETE FROM inbox_customer_links WHERE thread_id=?', [id]);
+    } else {
+      const [[customer]] = await connection.execute<RowDataPacket[]>(
+        'SELECT id FROM customers WHERE id=? AND archived_at IS NULL FOR UPDATE',
+        [input.customerId],
+      );
+      if (!customer) throw new HttpError(404, 'NOT_FOUND');
+      await connection.execute(
+        'INSERT INTO inbox_customer_links (thread_id,customer_id) VALUES (?,?) ON DUPLICATE KEY UPDATE customer_id=VALUES(customer_id)',
+        [id, input.customerId],
+      );
+    }
+    await writeAuditEvent(connection, {
+      actorId: actor.id,
+      action: input.customerId ? 'inbox.customer_linked' : 'inbox.customer_unlinked',
+      entityType: 'conversation',
+      entityId: id,
+      module: 'inbox',
+    });
+  });
+}
 export async function receiveMeta(
   channel: MetaChannel,
   account: string,

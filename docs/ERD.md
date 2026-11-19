@@ -284,6 +284,10 @@ erDiagram
 - Inbox de-duplicates client requests and provider message identifiers. Web threads are linked to a share and quotation owner. Meta threads are keyed by channel/account/contact.
 - Email logs store the quote/recipient/subject and acceptance status, with no SMTP credentials or share token. OAuth state and browser binding use SHA-256 digests and a ten-minute expiry. The Google identity is unique per OAuth client/subject.
 
+Migration 020 adds `finance_invoice_customers`, a one-to-one invoice link to a CRM customer with an index by customer. Booking-linked finance records use the booking account's customer. The Customer File resolves quotation revisions, messages and mail by the customer ID in the associated revision snapshot, preserving the original customer when a quote is reassigned.
+
+Migration 021 adds `inbox_customer_links`, mapping a social conversation to one CRM customer after administrator confirmation. It has foreign keys to `inbox_threads` and `customers`. The link does not change Inbox ownership or affect the customer snapshot on quotation-link conversations.
+
 ## Project branding, active currencies and travel catalogue
 
 Migrations 017–019 add immutable public branding asset bytes, the installation's enabled ISO currency codes, and the reusable travel catalogue. A catalogue entry has a kind, bilingual names, an optional catalogue slug, an edit version and active status. Room entries have a foreign key to their parent hotel. `travel_hotel_options` links hotels with meal plans, amenities and travel add-ons. `travel_catalogue_media` grants authenticated staff use of the selected private media files. Catalogue prices and costs use DECIMAL and carry their own currency. Quotes retain their saved descriptions, names and amounts alongside selected catalogue IDs in the revision. Creating missing catalogue records and saving the quote occur in one transaction.

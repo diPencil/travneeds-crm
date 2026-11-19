@@ -26,11 +26,13 @@ import { FinanceHeading } from './FinanceComponents';
 import { InvoiceDocument } from './InvoiceDocument';
 import { InvoiceItemsEditor } from './InvoiceItemsEditor';
 import { useInvoiceCopy } from './invoice.copy';
+import type { CrmRecord } from '../../../shared/crm/crm.contracts';
 
 export function IssueInvoicePage() {
   const [query] = useSearchParams();
   const invoiceId = query.get('invoiceId');
   const bookingId = query.get('bookingId');
+  const customerId = !invoiceId && !bookingId ? query.get('customerId') : null;
   const { user } = useAuth();
   const { copy, isRTL } = useInvoiceCopy();
   const options = useApiResource<FinanceOptions>('/finance/options');
@@ -40,21 +42,27 @@ export function IssueInvoicePage() {
   const booking = useApiResource<FinanceBookingDetail>(
     !invoiceId && bookingId ? `/finance/bookings/${encodeURIComponent(bookingId)}` : null,
   );
+  const customer = useApiResource<CrmRecord>(
+    customerId ? `/crm/customers/${encodeURIComponent(customerId)}` : null,
+  );
   if (!user?.roles.includes('admin'))
     return <p role="alert">{isRTL ? 'غير مصرح' : 'Access denied'}</p>;
   if (
     options.loading ||
     existing.loading ||
     booking.loading ||
+    customer.loading ||
     options.error ||
     existing.error ||
-    booking.error
+    booking.error ||
+    customer.error
   )
     return (
       <>
         <DataState {...options} retry={options.reload} />
         <DataState {...existing} retry={existing.reload} />
         <DataState {...booking} retry={booking.reload} />
+        <DataState {...customer} retry={customer.reload} />
       </>
     );
   if (!options.data) return null;
@@ -62,11 +70,12 @@ export function IssueInvoicePage() {
     return <p role="alert">{copy.immutable}</p>;
   return (
     <InvoiceEditor
-      key={invoiceId || bookingId || 'new'}
+      key={invoiceId || bookingId || customerId || 'new'}
       options={options.data}
       existing={existing.data?.invoice}
       booking={booking.data?.booking}
       defaults={booking.data?.invoiceDefaults}
+      customer={customer.data ?? undefined}
     />
   );
 }
@@ -75,11 +84,13 @@ function InvoiceEditor({
   existing,
   booking,
   defaults,
+  customer,
 }: {
   options: FinanceOptions;
   existing?: Document;
   booking?: FinanceBooking;
   defaults?: FinanceBookingDetail['invoiceDefaults'];
+  customer?: CrmRecord;
 }) {
   const { copy, intlLocale, isRTL } = useInvoiceCopy();
   const toast = useToastContext();
@@ -92,9 +103,10 @@ function InvoiceEditor({
   );
   const [form, setForm] = useState<InvoiceInput>(() => ({
     bookingId: existing?.bookingId || booking?.id || '',
-    billTo: existing?.billTo || booking?.customer || '',
-    customerEmail: existing?.customerEmail || defaults?.email || '',
-    customerPhone: existing?.customerPhone || defaults?.phone || '',
+    customerId: existing?.customerId || customer?.id || undefined,
+    billTo: existing?.billTo || booking?.customer || customer?.fullName || '',
+    customerEmail: existing?.customerEmail || defaults?.email || customer?.email || '',
+    customerPhone: existing?.customerPhone || defaults?.phone || customer?.phone || '',
     customerAddress: existing?.customerAddress || '',
     issuerAddress: existing?.issuerAddress || '',
     issuerContact: existing?.issuerContact || '',
@@ -314,7 +326,13 @@ function InvoiceEditor({
                   }}
                 >
                   <option value="manual">{copy.manual}</option>
-                  <option value="booking" disabled={options.source.status !== 'ready'}>
+                  <option
+                    value="booking"
+                    disabled={
+                      options.source.status !== 'ready' ||
+                      Boolean(form.customerId && !existing?.bookingId)
+                    }
+                  >
                     {copy.booking}
                   </option>
                 </Select>

@@ -13,6 +13,7 @@ import { SystemLogsPage } from './modules/users/SystemLogsPage';
 import { UserDetailsPage } from './modules/users/UserDetailsPage';
 import { LeadsPage } from './modules/leads/LeadsPage';
 import { CustomersPage } from './modules/customers/CustomersPage';
+import { CustomerFilePage } from './modules/customers/CustomerFilePage';
 import { SuppliersPage } from './modules/suppliers/SuppliersPage';
 import { CrmFormPage } from './modules/crm/CrmFormPage';
 import { ConvertLeadPage } from './modules/leads/ConvertLeadPage';
@@ -167,10 +168,7 @@ function App() {
                         element={<CustomersPage key="corporate" corporate />}
                       />
                       <Route path="/customers/new" element={<CrmFormPage kind="customers" />} />
-                      <Route
-                        path="/customers/:id"
-                        element={<CrmFormPage kind="customers" readOnly />}
-                      />
+                      <Route path="/customers/:id" element={<CustomerFilePage />} />
                       <Route
                         path="/customers/:id/edit"
                         element={<CrmFormPage kind="customers" />}

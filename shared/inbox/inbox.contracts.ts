@@ -12,6 +12,7 @@ export interface InboxThread {
   lastInboundAt: string | null;
   unread: number;
   quotationId: string | null;
+  customerId: string | null;
 }
 export interface InboxMessage {
   id: string;

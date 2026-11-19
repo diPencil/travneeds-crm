@@ -3,6 +3,7 @@ import type { InvoiceLineInput } from './invoice-calculation.js';
 
 export interface InvoiceInput {
   bookingId: string;
+  customerId?: string;
   billTo: string;
   customerEmail: string;
   customerPhone: string;
@@ -21,6 +22,7 @@ export interface InvoiceInput {
   items: InvoiceLineInput[];
 }
 export interface InvoiceDocument extends FinanceInvoice {
+  customerId?: string | null;
   documentDate: string | null;
   customerEmail: string | null;
   customerPhone: string | null;

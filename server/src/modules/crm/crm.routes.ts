@@ -14,6 +14,8 @@ import {
   parseRecord,
 } from './crm.service.js';
 import { listInput, recordIdInput, convertLeadInput } from './crm.validation.js';
+import { customerFileSections } from '../../../../shared/crm/customer-file.contracts.js';
+import { readCustomerFile, readCustomerFilePage } from './customer-file.service.js';
 
 export const crmRouter = Router();
 crmRouter.use(requireSession);
@@ -57,6 +59,32 @@ crmRouter.get('/:kind/:id', async (request, response) => {
   if (result.archivedAt && !(response.locals.session as AuthSession).user.roles.includes('admin'))
     throw new HttpError(403, 'FORBIDDEN');
   response.json(result);
+});
+crmRouter.get('/customers/:id/file', async (request, response) => {
+  response
+    .set('Cache-Control', 'no-store')
+    .json(
+      await readCustomerFile(
+        recordIdInput.parse(request.params.id),
+        (response.locals.session as AuthSession).user,
+      ),
+    );
+});
+crmRouter.get('/customers/:id/file/:section', async (request, response) => {
+  const { page } = z
+    .object({ page: z.coerce.number().int().min(1).max(10000).default(1) })
+    .strict()
+    .parse(request.query);
+  response
+    .set('Cache-Control', 'no-store')
+    .json(
+      await readCustomerFilePage(
+        recordIdInput.parse(request.params.id),
+        (response.locals.session as AuthSession).user,
+        z.enum(customerFileSections).parse(request.params.section),
+        page,
+      ),
+    );
 });
 crmRouter.use(requireCsrf);
 crmRouter.post('/:kind', async (request, response) => {
