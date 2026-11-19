@@ -1,3 +1,4 @@
+import { isUploadedBrandAsset, readBrandAsset } from './brand-assets.service.js';
 import type { RowDataPacket } from 'mysql2/promise';
 import { z } from 'zod';
 import { realpath } from 'node:fs/promises';
@@ -6,13 +7,14 @@ import type {
   ProjectSettings,
   SettingsResponse,
 } from '../../../../shared/settings/settings.contracts.js';
+import {
+  localBrandAssetPath,
+  localBrandAssetPathLimit,
+} from '../../../../shared/settings/settings.contracts.js';
 import { pool, transaction } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
 
-const localAsset = z
-  .string()
-  .regex(/^\/(?!\/)[a-zA-Z0-9/_-]+\.(png|jpg|jpeg|webp|svg|ico)$/)
-  .max(255);
+const localAsset = z.string().regex(localBrandAssetPath).max(localBrandAssetPathLimit);
 export const settingsInput = z
   .object({
     projectName: z.string().trim().min(1).max(100),
@@ -58,9 +60,14 @@ export async function readSettingsPage(): Promise<SettingsResponse> {
   const license = licenses[0];
   if (!license) throw new HttpError(503, 'SETTINGS_UNAVAILABLE');
   const [rates] = await pool.execute<RowDataPacket[]>(
-    'SELECT base_currency AS baseCurrency, quote_currency AS quoteCurrency, CAST(rate AS CHAR) AS rate, effective_at AS effectiveAt, source FROM currency_rates ORDER BY base_currency, quote_currency',
+    'SELECT base_currency AS baseCurrency, quote_currency AS quoteCurrency, CAST(rate AS CHAR) AS rate, effective_at AS effectiveAt, source, version FROM currency_rates ORDER BY base_currency, quote_currency',
+  );
+  const [currencies] = await pool.query<RowDataPacket[]>(
+    'SELECT code FROM project_currencies ORDER BY code',
   );
   return {
+    currencies: currencies.map((row) => String(row.code)),
+    supportedCurrencies: Intl.supportedValuesOf('currency'),
     settings,
     license: {
       status: license.status,
@@ -77,7 +84,16 @@ export async function saveSettings(
   actorId: string,
 ): Promise<ProjectSettings> {
   const publicRoot = await realpath('public');
-  for (const asset of [input.logoUrl, input.faviconUrl]) {
+  for (const [kind, asset] of [
+    ['logo', input.logoUrl],
+    ['favicon', input.faviconUrl],
+  ] as const) {
+    if (isUploadedBrandAsset(asset)) {
+      await readBrandAsset(asset, kind).catch(() => {
+        throw new HttpError(400, 'INVALID_INPUT');
+      });
+      continue;
+    }
     const resolved = await realpath(path.join(publicRoot, asset.slice(1))).catch(() => null);
     if (!resolved || !resolved.startsWith(publicRoot + path.sep))
       throw new HttpError(400, 'INVALID_INPUT');
@@ -96,6 +112,9 @@ export async function saveSettings(
     );
     if (!('affectedRows' in result) || result.affectedRows !== 1)
       throw new HttpError(409, 'SETTINGS_CONFLICT');
+    await connection.execute('INSERT IGNORE INTO project_currencies (code) VALUES (?)', [
+      input.baseCurrency,
+    ]);
     await connection.execute(
       "INSERT INTO audit_events (actor_id, action, entity_type, entity_id) VALUES (?, 'settings.updated', 'project_settings', '1')",
       [actorId],

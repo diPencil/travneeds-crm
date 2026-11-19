@@ -22,9 +22,11 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   const updateBranding = useCallback((settings: BrandingSettings) => {
     setBranding(settings);
     document.title = settings.projectName;
-    document
-      .querySelector<HTMLLinkElement>('link[rel="icon"]')
-      ?.setAttribute('href', settings.faviconUrl);
+    const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (favicon) {
+      favicon.removeAttribute('type');
+      favicon.href = settings.faviconUrl;
+    }
     const channels = settings.primaryColor
       .slice(1)
       .match(/.{2}/g)!

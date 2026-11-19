@@ -1,0 +1,9 @@
+# Integration settings and currency specifications
+
+Objective: administrator-only configuration for SMTP/incoming mailbox fields, Google login, Google Cloud Translation, Messenger, Instagram and WhatsApp Business. Save through authenticated/CSRF-protected versioned APIs. Provider fields use a fixed allowlist; reject unknown values. Encrypt secrets with AES-256-GCM and provider/field associated data using an environment-only installation key. Read responses expose presence booleans, never secret values. Omitted/empty secret inputs preserve existing values; explicit clearing is separate. A complete saved configuration is described as configured, never connected. Never copy secrets from the source project or send real test messages without a named recipient/task.
+
+Currency: persist explicit pair/rate/effective time/source and version in the existing currency table; validate ISO currency codes and decimal precision. Conversion is exact integer arithmetic and returns the used rate and timestamps. Missing/future rates fail; no fallback conversion or currency relabeling. Transactional writes include audits and reject stale versions. Existing original monetary amounts stay intact.
+
+Structure: shared/settings for contracts/field definitions and shared/currency for exact calculations; server/src/modules/settings for SQL/validation/services/routes; owning frontend settings components; versioned migration 010 onward; tests under server/tests. Checks: npm run check; npm audit if dependencies change. Tests include unauthorized/forbidden/CSRF, secret encryption/tamper/AAD isolation, no readback, unknown provider/field, stale versions, exact conversion, missing rates and no fictitious connected state.
+
+Provider activation, actual email delivery, OAuth, automatic translation and signed channel webhook processing are separate following implementation slices, not claimed by these settings APIs.

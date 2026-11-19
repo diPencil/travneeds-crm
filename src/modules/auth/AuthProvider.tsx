@@ -68,6 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refresh: retry,
         signIn,
         signOut,
+        updateUser: (user) =>
+          setSession((current) => (current?.user.id === user.id ? { ...current, user } : current)),
       }}
     >
       {children}

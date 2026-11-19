@@ -31,9 +31,16 @@ dist-ssr
 
 # Local source projects used during the CRM rebuild
 /web-source/
+/web source/
 /Travneeds-CRM-old-modules/
 /module-sources/
 
 # Local agent skills and build cache
 /.agents/
 *.tsbuildinfo
+
+# Private uploaded quotation media (back up with the database)
+/server/storage/
+
+# Local QA screenshots can capture account or customer data
+/docs/quality/screenshots/

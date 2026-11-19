@@ -6,6 +6,10 @@ export interface AuthUser {
   fullName: string;
   roles: UserRole[];
   createdAt: string;
+  phone: string | null;
+  department: string | null;
+  profileVersion: number;
+  avatarGender: 'male' | 'female';
 }
 
 export interface AuthSession {

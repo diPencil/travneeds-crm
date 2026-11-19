@@ -13,7 +13,7 @@ const credentials = z
     password: z.string().min(1).max(128),
   })
   .strict();
-const cookieOptions = {
+export const sessionCookieOptions = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
   sameSite: 'strict' as const,
@@ -31,8 +31,14 @@ authRouter.post(
   }),
   async (request, response) => {
     const input = credentials.parse(request.body);
-    const result = await login(input.email, input.password);
-    response.cookie(sessionCookie, result.token, { ...cookieOptions, maxAge: 8 * 60 * 60 * 1000 });
+    const result = await login(input.email, input.password, {
+      requestIp: request.ip,
+      userAgent: request.get('User-Agent'),
+    });
+    response.cookie(sessionCookie, result.token, {
+      ...sessionCookieOptions,
+      maxAge: 8 * 60 * 60 * 1000,
+    });
     response.json({ user: result.user, csrfToken: result.csrfToken });
   },
 );
@@ -44,5 +50,5 @@ authRouter.get('/session', requireSession, (_request, response) => {
 authRouter.post('/logout', requireSession, requireCsrf, async (request, response) => {
   const session = response.locals.session as AuthSession;
   await logout(requestToken(request)!, session.user.id);
-  response.clearCookie(sessionCookie, cookieOptions).status(204).end();
+  response.clearCookie(sessionCookie, sessionCookieOptions).status(204).end();
 });

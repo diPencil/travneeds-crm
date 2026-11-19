@@ -1,12 +1,16 @@
+import { catalogueKinds } from '../../../shared/catalogue/catalogue-kinds';
 import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
+  CalendarCheck,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
   LayoutDashboard,
   LogOut,
+  MessagesSquare,
+  Mail,
   Settings,
   User,
   UserCheck,
@@ -56,23 +60,123 @@ const navigationGroups: NavGroup[] = [
   {
     id: 'main',
     titleKey: 'nav.main',
-    items: [{ id: 'home', icon: LayoutDashboard, labelKey: 'workspace.title', href: '/' }],
+    items: [{ id: 'home', icon: LayoutDashboard, labelKey: 'nav.dashboard', href: '/' }],
   },
   {
     id: 'crm',
     titleKey: 'nav.crm',
     items: [
-      { id: 'leads', icon: Users, labelKey: 'nav.leads', href: '/leads' },
-      { id: 'customers', icon: User, labelKey: 'nav.customers', href: '/customers' },
-      { id: 'suppliers', icon: ClipboardList, labelKey: 'nav.suppliers', href: '/suppliers' },
+      {
+        id: 'leads',
+        icon: Users,
+        labelKey: 'nav.leads',
+        href: '/leads',
+        subItems: [
+          { id: 'all-leads', labelKey: 'crm.nav.allLeads', href: '/leads' },
+          { id: 'new-lead', labelKey: 'crm.nav.newLead', href: '/leads/new' },
+          { id: 'overdue-leads', labelKey: 'crm.nav.overdue', href: '/leads/overdue' },
+        ],
+      },
+      {
+        id: 'customers',
+        icon: User,
+        labelKey: 'nav.customers',
+        href: '/customers',
+        subItems: [
+          { id: 'all-customers', labelKey: 'crm.nav.allCustomers', href: '/customers' },
+          { id: 'corporate', labelKey: 'crm.nav.corporate', href: '/customers/corporate' },
+          { id: 'new-customer', labelKey: 'crm.nav.newCustomer', href: '/customers/new' },
+        ],
+      },
+      {
+        id: 'suppliers',
+        icon: ClipboardList,
+        labelKey: 'nav.suppliers',
+        href: '/suppliers',
+        subItems: [
+          { id: 'all-suppliers', labelKey: 'crm.nav.allSuppliers', href: '/suppliers' },
+          { id: 'new-supplier', labelKey: 'crm.nav.newSupplier', href: '/suppliers/new' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'travel',
+    titleKey: 'nav.travel',
+    items: [
+      {
+        id: 'quotations',
+        icon: ClipboardList,
+        labelKey: 'nav.quotations',
+        href: '/quotations',
+        subItems: [
+          { id: 'all-quotations', labelKey: 'quotations.nav.all', href: '/quotations' },
+          { id: 'new-quotation', labelKey: 'quotations.nav.new', href: '/quotations/new' },
+        ],
+      },
+      {
+        id: 'catalogue',
+        icon: ClipboardList,
+        labelKey: 'nav.catalogue',
+        href: '/catalogue/destinations',
+        subItems: catalogueKinds.map((kind) => ({
+          id: kind,
+          href: `/catalogue/${kind}`,
+          labelKey: `catalogue.${kind}` as const,
+        })),
+      },
+      {
+        id: 'bookings',
+        icon: CalendarCheck,
+        labelKey: 'nav.bookings',
+        href: '/bookings',
+        subItems: [
+          { id: 'all-bookings', labelKey: 'bookings.nav.all', href: '/bookings' },
+          { id: 'new-booking', labelKey: 'bookings.nav.new', href: '/bookings/new' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'communications',
+    titleKey: 'nav.communications',
+    items: [
+      { id: 'inbox', icon: MessagesSquare, labelKey: 'nav.inbox', href: '/inbox' },
+      { id: 'emails', icon: Mail, labelKey: 'nav.emails', href: '/emails' },
     ],
   },
   {
     id: 'system',
     titleKey: 'nav.system',
     items: [
-      { id: 'finance', icon: Wallet, labelKey: 'nav.finance', href: '/finance' },
-      { id: 'users', icon: UserCheck, labelKey: 'nav.userManagement', href: '/users' },
+      {
+        id: 'finance',
+        icon: Wallet,
+        labelKey: 'nav.finance',
+        href: '/finance',
+        subItems: [
+          { id: 'general-finance', labelKey: 'finance.nav.general', href: '/finance' },
+          { id: 'financial-reports', labelKey: 'finance.nav.reports', href: '/finance/reports' },
+          { id: 'financial-invoices', labelKey: 'finance.nav.invoices', href: '/finance/invoices' },
+          {
+            id: 'record-payment',
+            labelKey: 'finance.nav.payment',
+            href: '/finance/record-payment',
+          },
+        ],
+      },
+      {
+        id: 'users',
+        icon: UserCheck,
+        labelKey: 'nav.userManagement',
+        href: '/users',
+        subItems: [
+          { id: 'active-users', labelKey: 'users.nav.active', href: '/users' },
+          { id: 'invite-user', labelKey: 'users.nav.invite', href: '/users/invite' },
+          { id: 'user-roles', labelKey: 'users.nav.roles', href: '/users/roles' },
+          { id: 'system-logs', labelKey: 'users.nav.logs', href: '/users/logs' },
+        ],
+      },
       { id: 'settings', icon: Settings, labelKey: 'nav.settings', href: '/settings' },
     ],
   },
@@ -231,10 +335,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <div key={item.id} className="space-y-0.5">
                         <div className="flex items-center group relative">
                           {hasSubItems ? (
-                            <div
-                              onClick={(e) => toggleMenu(item.id, e)}
+                            <button
+                              type="button"
+                              aria-label={t(item.labelKey)}
+                              aria-expanded={!isCollapsed && isMenuOpen}
+                              onClick={(e) =>
+                                isCollapsed ? navigate(item.href) : toggleMenu(item.id, e)
+                              }
                               className={cn(
-                                'flex flex-1 items-center h-11 px-4 rounded-2xl transition-all duration-300 cursor-pointer',
+                                'flex flex-1 items-center text-start h-11 px-4 rounded-2xl transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500',
                                 isParentActive
                                   ? 'bg-blue-50 text-blue-500 dark:bg-blue-600/20 dark:text-blue-400'
                                   : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white',
@@ -251,7 +360,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   )}
                                 />
                               )}
-                            </div>
+                            </button>
                           ) : (
                             <NavLink
                               to={item.href}
@@ -333,7 +442,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <div className={cn('flex items-center gap-3', isCollapsed && 'justify-center gap-0')}>
             <UserAvatar
-              alt="SA Avatar"
+              alt={user?.fullName || 'Avatar'}
+              gender={user?.avatarGender}
+              verified={Boolean(user)}
               className={cn('transition-all duration-300', isCollapsed ? 'w-7 h-7' : 'w-10 h-10')}
             />
             {!isCollapsed && (

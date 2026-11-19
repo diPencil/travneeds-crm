@@ -10,6 +10,7 @@ export interface ToastProps {
   title: string;
   message?: string;
   duration?: number;
+  placement?: 'bottom-center';
   onClose: (id: string) => void;
 }
 
@@ -19,11 +20,12 @@ export const Toast: React.FC<ToastProps> = ({
   title,
   message,
   duration = 5000,
+  placement,
   onClose,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
-  const { direction } = useLocale();
+  const { direction, t } = useLocale();
 
   const handleClose = useCallback(() => {
     setIsLeaving(true);
@@ -63,7 +65,7 @@ export const Toast: React.FC<ToastProps> = ({
   const getStyles = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300';
+        return 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300';
       case 'error':
         return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300';
       case 'warning':
@@ -89,15 +91,17 @@ export const Toast: React.FC<ToastProps> = ({
   return (
     <div
       className={cn(
-        'max-w-sm w-full border rounded-lg shadow-lg p-4 transition-all duration-300 ease-in-out',
+        'pointer-events-auto max-w-sm w-full border rounded-lg shadow-lg p-4 transition-all duration-300 ease-in-out',
         getStyles(),
         isVisible && !isLeaving
-          ? 'translate-x-0 opacity-100'
-          : pickDirectionalValue(
-              direction,
-              'translate-x-full opacity-0',
-              '-translate-x-full opacity-0',
-            ),
+          ? 'translate-x-0 translate-y-0 opacity-100'
+          : placement === 'bottom-center'
+            ? 'translate-y-3 opacity-0'
+            : pickDirectionalValue(
+                direction,
+                'translate-x-full opacity-0',
+                '-translate-x-full opacity-0',
+              ),
       )}
     >
       <div
@@ -108,14 +112,23 @@ export const Toast: React.FC<ToastProps> = ({
         )}
       >
         <div className={cn('flex-shrink-0', getIconColor())}>{getIcon()}</div>
-        <div className={pickDirectionalValue(direction, 'ml-3 flex-1', 'mr-3 flex-1')}>
+        <div
+          role={type === 'error' || type === 'warning' ? 'alert' : 'status'}
+          className={pickDirectionalValue(direction, 'ml-3 flex-1', 'mr-3 flex-1')}
+        >
           <p className="text-sm font-medium">{title}</p>
-          {message && <p className="mt-1 text-sm opacity-90">{message}</p>}
+          {message && (
+            <p className="mt-1 break-words text-sm opacity-90" dir="auto">
+              {message}
+            </p>
+          )}
         </div>
         <div
           className={pickDirectionalValue(direction, 'ml-4 flex-shrink-0', 'mr-4 flex-shrink-0')}
         >
           <button
+            type="button"
+            aria-label={t('common.close')}
             onClick={handleClose}
             className="inline-flex rounded-md p-1.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
           >

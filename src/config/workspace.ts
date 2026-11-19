@@ -10,6 +10,30 @@ export interface WorkspaceSection {
 
 export const workspaceSections: WorkspaceSection[] = [
   {
+    id: 'emails',
+    href: '/emails',
+    titleKey: 'nav.emails',
+    descriptionKey: 'workspace.emailsDescription',
+  },
+  {
+    id: 'inbox',
+    href: '/inbox',
+    titleKey: 'nav.inbox',
+    descriptionKey: 'workspace.inboxDescription',
+  },
+  {
+    id: 'bookings',
+    href: '/bookings',
+    titleKey: 'nav.bookings',
+    descriptionKey: 'workspace.bookingsDescription',
+  },
+  {
+    id: 'quotations',
+    href: '/quotations',
+    titleKey: 'nav.quotations',
+    descriptionKey: 'workspace.quotationsDescription',
+  },
+  {
     id: 'leads',
     href: '/leads',
     titleKey: 'nav.leads',
@@ -29,6 +53,7 @@ export const workspaceSections: WorkspaceSection[] = [
   },
   {
     id: 'finance',
+    adminOnly: true,
     href: '/finance',
     titleKey: 'nav.finance',
     descriptionKey: 'workspace.financeDescription',

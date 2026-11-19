@@ -6,6 +6,7 @@ export interface ToastData {
   title: string;
   message?: string;
   duration?: number;
+  placement?: 'bottom-center';
 }
 
 export const useToast = () => {

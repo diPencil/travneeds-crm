@@ -1,18 +1,23 @@
 import { createHash, randomBytes } from 'node:crypto';
-import type { RowDataPacket } from 'mysql2/promise';
+import { isIP } from 'node:net';
+import type { PoolConnection, RowDataPacket } from 'mysql2/promise';
 import type { AuthSession } from '../../../../shared/auth/auth.contracts.js';
 import { pool, transaction } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
 import { getPublicUser, type UserRow } from '../users/users.repository.js';
 import { hashPassword, verifyPassword } from './passwords.js';
+import { writeAuditEvent } from '../audit/audit.repository.js';
 
 export const tokenHash = (token: string): string =>
   createHash('sha256').update(token).digest('hex');
 const unknownUserHash = hashPassword(randomBytes(32).toString('hex'));
 
+type SignInClient = { requestIp?: string; userAgent?: string };
+
 export async function login(
   email: string,
   password: string,
+  client: SignInClient = {},
 ): Promise<AuthSession & { token: string }> {
   const [rows] = await pool.execute<UserRow[]>('SELECT * FROM users WHERE email = ?', [
     email.toLowerCase(),
@@ -22,30 +27,67 @@ export async function login(
     password,
     user?.password_hash ?? (await unknownUserHash),
   );
-  if (!user || user.status !== 'active' || !validPassword)
+  const requestIp = client.requestIp && isIP(client.requestIp) ? client.requestIp : null;
+  if (!user || user.status !== 'active' || !validPassword) {
+    await writeAuditEvent(pool, {
+      actorId: null,
+      action: 'auth.login_failed',
+      entityType: 'user',
+      entityId: user?.id ?? null,
+      module: 'authentication',
+      severity: 'warning',
+      outcome: 'failure',
+      requestIp,
+      details: 'Sign-in rejected: invalid credentials or inactive account',
+    });
     throw new HttpError(401, 'INVALID_CREDENTIALS');
+  }
 
-  const token = randomBytes(32).toString('hex');
-  const csrfToken = randomBytes(32).toString('hex');
-  await transaction(async (connection) => {
+  return issueSession(user.id, client, 'Successful sign-in', async (connection) => {
     const [current] = await connection.execute<UserRow[]>(
       'SELECT password_hash, status FROM users WHERE id = ? FOR UPDATE',
       [user.id],
     );
-    if (current[0]?.status !== 'active' || current[0].password_hash !== user.password_hash) {
+    if (current[0]?.status !== 'active' || current[0].password_hash !== user.password_hash)
       throw new HttpError(401, 'INVALID_CREDENTIALS');
-    }
-    await connection.execute('DELETE FROM auth_sessions WHERE expires_at <= UTC_TIMESTAMP(6)');
-    await connection.execute(
-      'INSERT INTO auth_sessions (token_hash, csrf_token, user_id, expires_at) VALUES (?, ?, ?, DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 8 HOUR))',
-      [tokenHash(token), csrfToken, user.id],
-    );
-    await connection.execute(
-      "INSERT INTO audit_events (actor_id, action, entity_type, entity_id) VALUES (?, 'auth.login', 'user', ?)",
-      [user.id, user.id],
-    );
   });
-  const publicUser = await getPublicUser(user.id);
+}
+
+export async function issueSession(
+  userId: string,
+  client: SignInClient,
+  details: string,
+  validate: (connection: PoolConnection) => Promise<void>,
+): Promise<AuthSession & { token: string }> {
+  const token = randomBytes(32).toString('hex');
+  const csrfToken = randomBytes(32).toString('hex');
+  const requestIp = client.requestIp && isIP(client.requestIp) ? client.requestIp : null;
+  await transaction(async (connection) => {
+    await validate(connection);
+    await connection.execute('DELETE FROM auth_sessions WHERE expires_at <= UTC_TIMESTAMP(6)');
+    await connection.execute('UPDATE users SET last_login_at = UTC_TIMESTAMP(6) WHERE id = ?', [
+      userId,
+    ]);
+    await connection.execute(
+      'INSERT INTO auth_sessions (token_hash, csrf_token, user_id, expires_at, user_agent) VALUES (?, ?, ?, DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 8 HOUR), ?)',
+      [
+        tokenHash(token),
+        csrfToken,
+        userId,
+        client.userAgent?.replace(/\p{Cc}/gu, ' ').slice(0, 512) ?? null,
+      ],
+    );
+    await writeAuditEvent(connection, {
+      actorId: userId,
+      action: 'auth.login',
+      entityType: 'user',
+      entityId: userId,
+      module: 'authentication',
+      requestIp,
+      details,
+    });
+  });
+  const publicUser = await getPublicUser(userId);
   if (!publicUser) throw new HttpError(401, 'UNAUTHENTICATED');
   return { user: publicUser, csrfToken, token };
 }

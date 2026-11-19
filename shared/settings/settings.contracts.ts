@@ -1,3 +1,6 @@
+export const localBrandAssetPath = /^\/(?!\/)[a-zA-Z0-9/_-]+\.(png|jpg|jpeg|webp|svg|ico)$/;
+export const localBrandAssetPathLimit = 255;
+
 export interface BrandingSettings {
   projectName: string;
   primaryColor: string;
@@ -18,6 +21,7 @@ export interface LicenseStatus {
 }
 
 export interface CurrencyRate {
+  version: number;
   baseCurrency: string;
   quoteCurrency: string;
   rate: string;
@@ -29,4 +33,6 @@ export interface SettingsResponse {
   settings: ProjectSettings;
   license: LicenseStatus;
   rates: CurrencyRate[];
+  currencies: string[];
+  supportedCurrencies: string[];
 }

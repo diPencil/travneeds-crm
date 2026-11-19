@@ -27,6 +27,7 @@ const defaults: Record<string, string> = {
   DB_PASSWORD: randomBytes(32).toString('hex'),
   DB_MIGRATION_USER: 'root',
   DB_MIGRATION_PASSWORD: '',
+  INTEGRATION_SECRET_KEY: randomBytes(32).toString('hex'),
 };
 const obsolete = /^VITE_SUPABASE_(URL|ANON_KEY)=.*$/gm;
 contents = contents.replace(obsolete, '').trimEnd();

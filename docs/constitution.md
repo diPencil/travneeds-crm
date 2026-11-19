@@ -9,7 +9,7 @@ Deliver a coherent, maintainable full-stack CRM backed by the owner's existing `
 | Area | Responsibility |
 | --- | --- |
 | CRM | Leads, Customers and Suppliers within a single navigation group |
-| Finance | Read models and reports for bookings and payments |
+| Finance | Booking/payment read reports and itemized customer invoices, with manual or real booking inputs |
 | User Management | Real employee and administrator accounts and access rules |
 | Settings | Project name, colors, logo, favicon, base currency and future currency conversion |
 | Activation | Reserved monthly/annual licensing area, with serial issuing and validation deferred |

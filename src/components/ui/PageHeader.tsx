@@ -21,7 +21,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     <div
       className={cn(
         'flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-blue-600 text-white p-6 sm:p-8 rounded-3xl shadow-lg shadow-blue-500/20 mb-8',
-        direction === 'rtl' && 'sm:flex-row-reverse',
         className,
       )}
     >
@@ -29,16 +28,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>
         {description && <p className="mt-1 text-sm text-blue-100 opacity-90">{description}</p>}
       </div>
-      {actions && (
-        <div
-          className={cn(
-            'flex items-center gap-2 sm:gap-3 banner-actions',
-            direction === 'rtl' && 'flex-row-reverse',
-          )}
-        >
-          {actions}
-        </div>
-      )}
+      {actions && <div className="flex items-center gap-2 sm:gap-3 banner-actions">{actions}</div>}
     </div>
   );
 };

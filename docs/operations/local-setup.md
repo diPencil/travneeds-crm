@@ -52,3 +52,7 @@ The API entry point is `dist/server/server/src/index.js`. Serve the browser buil
 If MySQL stops or returns an Aria write error, inspect the configured data directory and its error log first. A normal restart using the existing XAMPP configuration may recover the service. Recheck table counts, runtime grants and migration status afterward. Database engine log deletion, table repair or changing the data directory requires a separate recovery plan and backup.
 
 During foundation setup an Aria write error occurred while creating the application account. A normal restart of the existing configured service restored access, and the account setup was then retried successfully. No engine log files were deleted or rewritten by project scripts.
+
+## Isolated integration verification
+
+The check command runs tests against a randomly named local travneeds_crm_test_ database using the existing migration identity. It creates no additional MySQL accounts or grants, never inserts test fixtures into travneeds_crm, and removes the test database after the run. A local non-production MySQL server and migration credentials are required.

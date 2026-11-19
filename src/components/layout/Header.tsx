@@ -21,23 +21,15 @@ import { LOCALE_META } from '../../localization/config';
 import { useLocale } from '../../localization/useLocale';
 import { pickDirectionalValue } from '../../localization/direction';
 import { cn } from '../../utils/cn';
+import { useNotifications } from '../../modules/notifications/useNotifications';
+import type { NotificationRecord } from '../../../shared/notifications/notifications.contracts';
+import { UserAvatar } from '../ui/UserAvatar';
+import { formatDateTime } from '../../utils/format';
+import { useToastContext } from '../../hooks/useToastContext';
 
 interface HeaderProps {
   onMenuToggle: () => void;
 }
-
-interface HeaderNotification {
-  id: number;
-  type: 'comment' | 'mention' | 'system' | 'alert';
-  user: string;
-  avatar: string;
-  content: string;
-  time: string;
-  isUnread: boolean;
-  href: string;
-}
-
-const initialNotifications: HeaderNotification[] = [];
 
 export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   const { theme, toggleTheme } = useTheme();
@@ -47,7 +39,15 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [filter, setFilter] = useState<'All' | 'Unread'>('All');
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const {
+    notifications,
+    unreadCount,
+    markAllAsRead: markAllStored,
+    markAsRead,
+    loading: notificationsLoading,
+    failed: notificationsFailed,
+  } = useNotifications();
+  const toast = useToastContext();
   const [showOptions, setShowOptions] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -67,19 +67,23 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const unreadCount = notifications.filter((n) => n.isUnread).length;
   const filteredNotifications = notifications.filter((n) => filter === 'All' || n.isUnread);
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, isUnread: false })));
+  const markAllAsRead = async () => {
+    try {
+      await markAllStored();
+    } catch {
+      toast.error(t('settings.failed'));
+    }
   };
-
-  const handleNotificationClick = (notification: HeaderNotification) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notification.id ? { ...n, isUnread: false } : n)),
-    );
-    setShowNotifications(false);
-    navigate(notification.href);
+  const handleNotificationClick = async (notification: NotificationRecord) => {
+    try {
+      if (notification.isUnread) await markAsRead(notification.id);
+      setShowNotifications(false);
+      navigate(notification.href);
+    } catch {
+      toast.error(t('settings.failed'));
+    }
   };
 
   return (
@@ -272,7 +276,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                         >
                           <button
                             onClick={() => {
-                              markAllAsRead();
+                              void markAllAsRead();
                               setShowOptions(false);
                             }}
                             className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
@@ -291,7 +295,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                             onClick={() => {
                               setShowOptions(false);
                               setShowNotifications(false);
-                              navigate('/settings');
+                              navigate('/notifications');
                             }}
                             className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                           >
@@ -303,7 +307,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                                 'ml-3 text-gray-400',
                               )}
                             />
-                            <span className="font-medium">{t('header.notificationSettings')}</span>
+                            <span className="font-medium">{t('header.notifications')}</span>
                           </button>
                         </div>
                       )}
@@ -327,7 +331,15 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                 </div>
 
                 <div className="max-h-[400px] overflow-y-auto px-2 pb-2 scrollbar-none">
-                  {filteredNotifications.length > 0 ? (
+                  {notificationsLoading ? (
+                    <p role="status" className="py-8 text-center">
+                      {t('common.loading')}
+                    </p>
+                  ) : notificationsFailed ? (
+                    <p role="alert" className="py-8 text-center">
+                      {t('settings.failed')}
+                    </p>
+                  ) : filteredNotifications.length > 0 ? (
                     <div className="space-y-0.5">
                       {filteredNotifications.map((notification) => (
                         <div
@@ -342,9 +354,8 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                               'relative flex-shrink-0 ml-3',
                             )}
                           >
-                            <img
-                              src={notification.avatar}
-                              alt={notification.user}
+                            <UserAvatar
+                              alt={notification.user ?? t('header.notifications')}
                               className="w-12 h-12 rounded-full border border-gray-100 dark:border-gray-800"
                             />
                             {notification.type === 'comment' && (
@@ -406,7 +417,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                             <p
                               className={`text-[12px] font-semibold mt-1 ${notification.isUnread ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}
                             >
-                              {notification.time}
+                              {formatDateTime(notification.createdAt)}
                             </p>
                           </div>
 
@@ -428,6 +439,17 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                       </p>
                     </div>
                   )}
+                </div>
+                <div className="p-2 border-t border-gray-100 dark:border-gray-800">
+                  <button
+                    onClick={() => {
+                      setShowNotifications(false);
+                      navigate('/notifications');
+                    }}
+                    className="w-full py-1.5 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-white/5 rounded-md"
+                  >
+                    {t('notifications.viewAll')}
+                  </button>
                 </div>
               </div>
             )}

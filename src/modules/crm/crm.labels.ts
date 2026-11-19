@@ -1,0 +1,28 @@
+const ar: Record<string, string> = {
+  New: 'جديد',
+  Contacted: 'تم التواصل',
+  Qualified: 'مؤهل',
+  Proposal: 'عرض مقدم',
+  Negotiation: 'تفاوض',
+  'Closed Won': 'مغلق بنجاح',
+  'Closed Lost': 'مغلق بخسارة',
+  Website: 'الموقع الإلكتروني',
+  'Social Media': 'التواصل الاجتماعي',
+  Referral: 'ترشيح',
+  Email: 'البريد الإلكتروني',
+  'Walk-in': 'زيارة مباشرة',
+  'Cold Call': 'اتصال مباشر',
+  High: 'عالية',
+  Medium: 'متوسطة',
+  Low: 'منخفضة',
+  Individual: 'فرد',
+  Corporate: 'شركة',
+  Active: 'نشط',
+  VIP: 'مميز',
+  Recurring: 'متكرر',
+  Suspended: 'موقوف',
+  Inactive: 'غير نشط',
+};
+export function crmLabel(value: string | undefined, isRTL: boolean) {
+  return value ? (isRTL ? ar[value] || value : value) : '—';
+}

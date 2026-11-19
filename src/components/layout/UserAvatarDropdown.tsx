@@ -5,7 +5,7 @@ import { useAuth } from '../../modules/auth/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToastContext } from '../../hooks/useToastContext';
 import { UserAvatar } from '../ui/UserAvatar';
-import { ProfileModal } from './ProfileModal';
+import { ProfileModal } from '../../modules/account/ProfileModal';
 import { ActivityLogModal } from '../../modules/audit/ActivityLogModal';
 import { useLocale } from '../../localization/useLocale';
 import { pickDirectionalValue } from '../../localization/direction';
@@ -64,7 +64,12 @@ export const UserAvatarDropdown: React.FC<UserAvatarDropdownProps> = ({ user }) 
           'flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-row-reverse',
         )}
       >
-        <UserAvatar alt="Avatar" className="w-8 h-8" />
+        <UserAvatar
+          gender={user?.avatarGender}
+          verified={Boolean(user)}
+          alt={user?.fullName || 'Avatar'}
+          className="w-8 h-8"
+        />
         <ChevronDown
           className={`h-4 w-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
@@ -87,7 +92,12 @@ export const UserAvatarDropdown: React.FC<UserAvatarDropdownProps> = ({ user }) 
                 'flex items-center gap-3 flex-row-reverse text-right',
               )}
             >
-              <UserAvatar alt="Avatar" className="w-10 h-10" />
+              <UserAvatar
+                gender={user?.avatarGender}
+                verified={Boolean(user)}
+                alt={user?.fullName || 'Avatar'}
+                className="w-10 h-10"
+              />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{userName}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 ltr-value">{userEmail}</p>

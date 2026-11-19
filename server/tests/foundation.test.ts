@@ -13,9 +13,99 @@ import { env } from '../src/config/env.js';
 import { requireAdmin, requireCsrf } from '../src/modules/auth/auth.middleware.js';
 import express from 'express';
 import { errorHandler } from '../src/http/errors.js';
+import { profileInput } from '../src/modules/account/account.routes.js';
+import { leadInput } from '../src/modules/crm/crm.validation.js';
 
 after(async () => {
   await pool.end();
+});
+
+test('CRM validation rejects non-currencies and unpaired or malformed money', () => {
+  const details = {
+    fullName: randomBytes(5).toString('hex'),
+    email: '',
+    phone: '',
+    company: '',
+    notes: '',
+    type: 'B2C',
+    source: 'Website',
+    priority: 'Medium',
+    status: 'New',
+    assignedUserId: '',
+    nextFollowUpAt: '',
+    valueAmount: '12.34',
+    currency: 'USD',
+  };
+  assert.equal(leadInput.safeParse(details).success, true);
+  assert.equal(leadInput.safeParse({ ...details, currency: 'ZZZ' }).success, false);
+  assert.equal(leadInput.safeParse({ ...details, currency: '' }).success, false);
+  assert.equal(leadInput.safeParse({ ...details, valueAmount: '-1' }).success, false);
+  assert.equal(leadInput.safeParse({ ...details, valueAmount: '1.234' }).success, false);
+  assert.equal(leadInput.safeParse({ ...details, convertedCustomerId: '1' }).success, false);
+});
+
+test('retained core modules require server authentication', async () => {
+  for (const path of [
+    '/users',
+    '/users/invitations',
+    '/users/logs',
+    '/crm/leads',
+    '/crm/customers',
+    '/crm/suppliers',
+  ]) {
+    await request(app).get(`/api${path}`).expect(401);
+  }
+});
+
+test('user detail tabs require a real administrator session', async () => {
+  await request(app).get('/api/users/00000000-0000-4000-8000-000000000000').expect(401);
+});
+
+test('finance foundation read APIs require authentication', async () => {
+  for (const path of ['/finance', '/finance/reports', '/finance/invoices', '/finance/options']) {
+    await request(app).get(`/api${path}`).expect(401);
+  }
+});
+
+test('restored account, notification and dashboard APIs require a real session', async () => {
+  await request(app).get('/api/dashboard').expect(401);
+  await request(app).get('/api/notifications').expect(401);
+  await request(app)
+    .patch('/api/account/profile')
+    .set('Origin', env.APP_ORIGIN)
+    .send({})
+    .expect(401);
+});
+
+test('profile updates reject role and ownership assignment', () => {
+  const details = {
+    fullName: randomBytes(8).toString('hex'),
+    email: `${randomBytes(8).toString('hex')}@example.invalid`,
+    phone: '',
+    avatarGender: 'female',
+    version: 0,
+  };
+  assert.equal(profileInput.safeParse(details).success, true);
+  assert.equal(profileInput.safeParse({ ...details, avatarGender: 'other' }).success, false);
+  assert.equal(profileInput.safeParse({ ...details, roles: ['admin'] }).success, false);
+  assert.equal(
+    profileInput.safeParse({ ...details, userId: randomBytes(16).toString('hex') }).success,
+    false,
+  );
+});
+
+test('notification mutations reject unauthenticated requests', async () => {
+  await request(app)
+    .post('/api/notifications/read-all')
+    .set('Origin', env.APP_ORIGIN)
+    .send({})
+    .expect(401);
+  await request(app)
+    .post('/api/notifications/1/read')
+    .set('Origin', env.APP_ORIGIN)
+    .send({})
+    .expect(401);
+  await request(app).delete('/api/notifications/1').set('Origin', env.APP_ORIGIN).expect(401);
 });
 
 test('the configured runtime account can read the applied schema and stored configuration', async () => {

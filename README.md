@@ -15,6 +15,8 @@ Full-stack CRM foundation with a React/TypeScript frontend, Express 5 API and th
 | [API](docs/operations/api.md) | Routes, authorization and request contracts |
 | [Skills](docs/tooling/skills.md) | Installed repositories, versions and tool limitations |
 | [QA report](docs/quality/foundation-verification.md) | Verification evidence and remaining checks |
+| [Core-module QA](docs/quality/core-module-restoration.md) | Avatar/module restoration, isolated persistence tests and browser evidence |
+| [User tabs and audit QA](docs/quality/user-detail-audit-restoration.md) | Original six-tab user view, full audit table/filter/export and verification |
 
 ## Run locally
 
@@ -36,11 +38,18 @@ The initial administrator is created interactively using real owner-provided det
 ## Current features
 
 - Database-backed login, server sessions, logout, role checks and personal audit history.
-- Public landing page, protected application shell, Arabic RTL/English LTR and light/dark appearance.
+- Original-style login and dashboard, protected application shell, Arabic RTL/English LTR and light/dark appearance.
+- Independent account profile with real profile editing, notification center, and filtered personal activity log.
 - Administrator settings for project name, primary color, existing local logo/favicon paths and base currency, with optimistic concurrency protection.
-- Stored exchange-rate display with a real empty state. Source integration and conversion workflow are pending.
+- Administrator-maintained exchange rates and exact currency conversion. Provider settings store encrypted credentials for SMTP, Google Login, Google Cloud Translation and the Meta messaging channels.
 - Visible monthly/annual activation area. The initial license is inactive and serial validation is deferred.
-- Prepared CRM sections for Leads, Customers and Suppliers, plus Finance and User Management. Their business workflows await source-module integration.
+- Original-style User Management with actual account creation/editing/status, server-enforced admin/employee roles, active-session counts/revocation, expiring invitation links and system audit.
+- Original male/female avatar assets, a stored avatar choice and consistent account/header/sidebar display.
+- Original six-tab user detail view with database-backed personal/work data, actual sessions, capabilities, activity and metrics. System Audit Trail restores the original table, filters and full filtered CSV export.
+- Persisted Leads, Customers and Suppliers directories with forms, search, filters, current-page CSV export, pagination, optimistic updates and recoverable administrator archiving. Lead assignment creates an actual notification; lead conversion is transactional and safe to retry.
+- Quotations support four trip types from the source, hotels and rooms, bilingual content, customer links and server-generated PDFs. Bookings can be created explicitly from a saved edition.
+- Finance reports read confirmed and completed bookings. Booking-linked and manual customer invoices have editable line items.
+- Inbox handles quotation-link chat and has Messenger, Instagram and WhatsApp Business adapters. Emails records SMTP sends initiated from a quotation.
 
 ## Organization and data policy
 
@@ -57,7 +66,7 @@ npm run check
 npm audit
 ```
 
-The check command verifies Prettier formatting and runs ESLint, frontend/backend type checks, security/foundation tests and both production builds. Local HTTP and MySQL tests require an environment permitting local sockets. Tests keep generated security inputs in memory and do not seed the development database.
+The check command verifies Prettier formatting and runs ESLint, frontend/backend type checks, foundation tests, isolated full-stack integration tests and both production builds. Local HTTP and MySQL tests require an environment permitting local sockets. Integration tests use the existing migration identity to create and remove a randomly named local test database. They create no MySQL users or grants and never seed the development database. Keep migration credentials available only to the local operational/test commands.
 
 Build with `npm run build`. Start the compiled API with `npm start`. Serve the browser build separately with a same-origin `/api` reverse proxy. Production requires HTTPS, deployment secrets, backups and process supervision. See the local setup and architecture decision for deployment boundaries.
 
@@ -66,3 +75,9 @@ Build with `npm run build`. Start the compiled API with `npm start`. Serve the b
 Origin is [diPencil/travneeds-crm](https://github.com/diPencil/travneeds-crm). The clean foundation branch is `codex/clean-foundation`. Old history remains a local recovery reference. Changes in this setup pass are local until explicitly published.
 
 Use npm run format to apply the formatting configuration stored in package.json.
+
+## Finance
+
+Financial Controls, invoices, booking financial details, payment entry and financial reports retain the original design. Authenticated administrator read APIs use MySQL projections. Manual itemized customer invoices can be saved as drafts, edited and issued with unique numbers, then printed or saved as PDF through the browser. Travel Bookings supplies booking reports. Payment posting, supplier invoice entry and payment gateways are outside this delivery. Provider setup and production requirements are documented in [Travel and communications](docs/operations/travel-communications.md). See [Finance API](docs/operations/finance-api.md) and [verification](docs/quality/finance-foundation.md).
+
+[Itemized invoice verification](docs/quality/itemized-invoices.md) documents the exact-money, persistence, concurrency and browser checks.

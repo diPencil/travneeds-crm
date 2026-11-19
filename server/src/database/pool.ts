@@ -43,9 +43,31 @@ export async function transaction<T>(
 }
 
 export async function checkDatabase(): Promise<void> {
+  const migrations = [
+    '001_foundation',
+    '002_account_notifications',
+    '003_account_avatars',
+    '004_user_management',
+    '005_crm_directories',
+    '006_user_details_audit',
+    '007_finance_foundation',
+    '008_itemized_invoices',
+    '009_invoice_payment_terms',
+    '010_integration_settings',
+    '011_quotations',
+    '012_quotation_media_storage',
+    '013_travel_bookings',
+    '014_inbox',
+    '015_email_deliveries',
+    '016_google_login',
+    '017_brand_assets_and_currencies',
+    '018_travel_catalogue',
+    '019_catalogue_commercial_values',
+  ];
   const [rows] = await pool.query<RowDataPacket[]>(
-    'SELECT COUNT(*) AS count FROM schema_migrations WHERE version = ?',
-    ['001_foundation'],
+    `SELECT COUNT(*) AS count FROM schema_migrations WHERE version IN (${migrations.map(() => '?').join(', ')})`,
+    migrations,
   );
-  if (Number(rows[0]?.count) !== 1) throw new Error('Database migration is required.');
+  if (Number(rows[0]?.count) !== migrations.length)
+    throw new Error('Database migration is required.');
 }

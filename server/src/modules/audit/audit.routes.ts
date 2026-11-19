@@ -8,7 +8,7 @@ export const auditRouter = Router();
 auditRouter.get('/mine', requireSession, async (_request, response) => {
   const session = response.locals.session as AuthSession;
   const [rows] = await pool.execute<RowDataPacket[]>(
-    'SELECT CAST(id AS CHAR) AS id, action, created_at AS createdAt FROM audit_events WHERE actor_id = ? ORDER BY id DESC LIMIT 50',
+    'SELECT CAST(id AS CHAR) AS id, action, entity_type AS entityType, entity_id AS entityId, created_at AS createdAt FROM audit_events WHERE actor_id = ? ORDER BY id DESC LIMIT 50',
     [session.user.id],
   );
   response.json({ events: rows });

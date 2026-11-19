@@ -1,0 +1,72 @@
+.quotation-editor-surface {
+  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-gray-900;
+}
+.quotation-editor-surface:focus-within {
+  @apply border-blue-400 ring-2 ring-blue-500/20;
+}
+.quotation-editor-toolbar {
+  @apply flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-800/80;
+}
+.quotation-editor-block {
+  @apply h-9 min-w-28 rounded-lg border border-slate-200 bg-white pe-2 ps-3 text-sm font-medium text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100;
+}
+.quotation-editor-tools {
+  @apply inline-flex shrink-0 items-center gap-0.5 border-s border-slate-200 ps-2 dark:border-slate-700;
+}
+.quotation-editor-tool {
+  @apply grid size-11 place-items-center rounded-lg border border-transparent text-slate-700 transition-colors hover:bg-white hover:text-slate-950 disabled:cursor-default disabled:opacity-40 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white sm:size-9;
+}
+.quotation-editor-tool[aria-pressed='true'],
+.quotation-editor-tool[aria-expanded='true'] {
+  @apply border-blue-200 bg-blue-100 text-blue-800 dark:border-blue-500/40 dark:bg-blue-600/25 dark:text-blue-200;
+}
+.quotation-editor-tool:focus-visible,
+.quotation-editor-block:focus-visible {
+  @apply outline outline-2 outline-offset-1 outline-blue-500;
+}
+.quotation-editor-link {
+  @apply flex flex-wrap items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60;
+}
+.quotation-rich-editor {
+  @apply relative min-h-48 text-base leading-relaxed text-slate-900 outline-none dark:text-slate-100;
+  max-height: 30rem;
+  overflow: auto;
+  padding: 17px 20px;
+  overflow-wrap: anywhere;
+}
+.quotation-editor-surface[data-empty='true'] .quotation-rich-editor::before {
+  @apply pointer-events-none absolute text-slate-500 dark:text-slate-400;
+  content: attr(data-placeholder);
+  inset-inline-start: 20px;
+  inset-block-start: 17px;
+}
+.quotation-rich-editor p {
+  margin-block: 8px;
+}
+.quotation-rich-editor h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-block: 14px;
+}
+.quotation-rich-editor h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-block: 12px;
+}
+.quotation-rich-editor ul {
+  list-style: disc;
+  padding-inline-start: 24px;
+}
+.quotation-rich-editor ol {
+  list-style: decimal;
+  padding-inline-start: 24px;
+}
+.quotation-rich-editor a {
+  @apply text-blue-700 underline dark:text-blue-300;
+}
+.quotation-rich-editor blockquote {
+  @apply my-3 border-s-2 border-slate-300 ps-4 dark:border-slate-600;
+}
+.quotation-rich-editor > :first-child {
+  margin-block-start: 0;
+}

@@ -12,11 +12,15 @@ export interface UserRow extends RowDataPacket {
   password_hash: string;
   status: 'active' | 'disabled';
   created_at: string;
+  phone: string | null;
+  department: string | null;
+  profile_version: number;
+  avatar_gender: 'male' | 'female';
 }
 
 export async function getPublicUser(id: string): Promise<AuthUser | null> {
   const [users] = await pool.execute<UserRow[]>(
-    'SELECT id, email, full_name, created_at FROM users WHERE id = ? AND status = ?',
+    "SELECT u.id, u.email, u.full_name, u.created_at, p.phone, p.department, COALESCE(p.avatar_gender, 'male') AS avatar_gender, COALESCE(p.version, 0) AS profile_version FROM users u LEFT JOIN user_profiles p ON p.user_id = u.id WHERE u.id = ? AND u.status = ?",
     [id, 'active'],
   );
   const user = users[0];
@@ -31,6 +35,10 @@ export async function getPublicUser(id: string): Promise<AuthUser | null> {
     fullName: user.full_name,
     createdAt: user.created_at,
     roles: roles.map((row) => row.role_code),
+    phone: user.phone,
+    department: user.department,
+    profileVersion: user.profile_version,
+    avatarGender: user.avatar_gender,
   };
 }
 

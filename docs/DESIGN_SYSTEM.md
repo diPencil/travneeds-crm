@@ -5,6 +5,8 @@
 
 ## مصدر التصميم
 
+افتارات `public/avatar-male.png` و`public/avatar-female.png` مستعادة من الأصول الأصلية. هي أصول تصميم مقصودة وليست بيانات تجريبية. الاختيار محفوظ في بيانات الحساب؛ لا يتم استنتاجه من الاسم. الهيدر والسايدبار يستخدمان الحلقة والعلامة الأصليتين لحساب الجلسة، وجدول المستخدمين يحتفظ بصورة دائرية صغيرة بحد رمادي. يحافظ User Management وLeads وCustomers وSuppliers على البانر الأزرق والكروت ذات الأيقونات الكبيرة والفلاتر والجداول وأسلوب النماذج الأصلية. القيم تأتي من API أو تظهر غير متاحة عندما ينقص مصدرها.
+
 الهوية المرجعية هي واجهة Travneeds الحالية. عند نقل منطق من أي مشروع مصدر، نستخدم هذا المرجع والمكوّنات المشتركة لبناء الواجهة.
 
 | الجزء | المصدر المستمر داخل المشروع |
@@ -20,7 +22,12 @@
 | Direction helpers | `src/localization/direction.ts` |
 | Formatting | `src/utils/format.ts` |
 | Login | `src/modules/auth/LoginPage.tsx` |
-| Landing | `src/modules/landing/LandingPage.tsx`, `landing.css` |
+| Dashboard | `src/modules/dashboard/Dashboard.tsx` |
+| Account profile | `src/modules/account/ProfileModal.tsx` |
+| Notifications | `src/modules/notifications/NotificationsPage.tsx` |
+| Activity log | `src/modules/audit/ActivityLogModal.tsx` |
+| User detail tabs | `src/modules/users/UserDetailsPage.tsx` |
+| System audit trail | `src/modules/users/SystemLogsPage.tsx` |
 
 النسخة المحلية المرجعية للموديولز السابقة في `Travneeds-CRM-old-modules/`. هذا المجلد مستبعد من Git. المواصفات التالية داخل الريبو حتى يظل التصميم متاحًا عند استخدام نسخة مستقلة منه.
 
@@ -268,6 +275,10 @@ Label 14px medium، ورسالة الخطأ 14px red-600 أو red-400. المس�
 `UserAvatar` صورة دائرية object-cover، ring-teal-600 بعرض 2px وoffset 2px، وdark teal-400. المقاس الافتراضي 40×40px، والهيدر 32×32px، والسايدبار المطوي 28×28px. علامة verified بحجم 40% وبحد أدنى 14px، وأيقونة Check بيضاء. موضع علامة التوثيق ثابت bottom-right في الأصل.
 `ToastContainer` أعلى نهاية الصفحة، 16px من الحافتين، z-index 100، gap 8px. الأنواع success/error/warning/info، مع إغلاق وإزالة تلقائية عبر الـ toast hooks. الموضع يمين في LTR ويسار في RTL.
 أثناء تجهيز القاعدة الجديدة تم توصيل الرسائل بنفس حالة ToastProvider، وتصحيح ترتيب تعريف معالج الإغلاق. الطبقة الحالية للرسائل 210 حتى تظهر فوق Modal العام ذي الطبقة 200.
+
+نماذج الحفظ تعرض توست نجاح بعد رد السيرفر، ويظل التوست ظاهرًا عند إغلاق النموذج أو الانتقال إلى السجل المحفوظ. تظل أخطاء الحفظ في النموذج لتوضيح سبب الفشل.
+
+أزرار تصدير CSV تعرض توست نجاح مترجم باسم الملف أسفل منتصف الشاشة لمدة تسع ثوانٍ، بعيدًا عن لوحة التنزيلات في المتصفح. تعرض الرسالة بدء التنزيل لأن حفظ الملف يديره المتصفح.
 Scrollbars بعرض وارتفاع 6px، thumb gray-200/gray-700، hover gray-300/gray-600، radius full، track شفاف. `.scrollbar-hide` يخفي الشريط ويحتفظ بالتمرير.
 
 ## العربية RTL والإنجليزية LTR
@@ -302,12 +313,10 @@ Scrollbars بعرض وارتفاع 6px، thumb gray-200/gray-700، hover gray-30
 | 2xl | 1536px | Tailwind الافتراضي |
 
 `.page-container` يطبق fade-in 500ms ease-in-out. الواجهة تستخدم transitions 200–300ms، watermark 500ms. لا نكرر عناصر مؤشرات أو badges بلا بيانات فعلية.
-Landing scroll reveal يستخدم translateY(40px) وopacity 0 ثم 1 خلال 700ms، مع stagger 100–600ms. Floating cards تتحرك 14px خلال 5s، والنمط البطيء 10px وrotate(1deg) خلال 7s. Pulse glow يتدرج من 20px إلى 40px خلال 3s. reduced-motion لا يملك سياسة عامة مكتملة في الأصل.
 
-## Login and Landing
+## Login
 
 Login يحتفظ بتصميمه الحالي بما فيه DotMap canvas، لون النقاط rgba(37,99,235,opacity)، وFramer Motion، وحالات إظهار كلمة المرور والتحقق من الحقول ورسائل الدخول. التحقق الحالي يستخدم جلسات السيرفر وحسابات MySQL الحقيقية.
-Landing تحتفظ بتركيبها وأنماطها في `landing.css`، والـ glassmorphism والخلفيات المتدرجة والأقسام والكروت والأنيميشن. التصميم الملتقط قبل إعادة البناء احتوى نصوصًا إنجليزية مباشرة. صفحة Landing وتسجيل الدخول الحاليان يستخدمان LocaleProvider ورسائل العربية والإنجليزية.
 
 ## تنظيم الـ tokens للتطوير القادم
 
@@ -360,16 +369,48 @@ Landing تحتفظ بتركيبها وأنماطها في `landing.css`، وال
 
 ## تحديث مرحلة الأساس المتصل بقاعدة البيانات
 
-- انتقلت صفحات Login وLanding إلى src/modules/ تحت أسماء الموديولز.
+- صفحة Login موجودة في src/modules/auth/، وقد أزيلت Landing بطلب المالك.
 - الألوان الزرقاء الحالية تستخدم متغيرات --brand-50 إلى --brand-950، مع نفس قيم الأزرق الأصلية افتراضيًا. BrandingProvider يحدّث الاسم واللون واللوجو وfavicon من API الإعدادات. تخصيص اللون متصل بمعظم درجات اللون الأساسية في المكوّنات المشتركة. الرسومات الزخرفية القديمة قد تحتفظ بقيمها الثابتة.
 - صفحة Settings تعرض تابات هوية المشروع والعملات والتفعيل. التابات تدعم الأسهم مع مراعاة RTL وHome وEnd. الحفظ متصل بقاعدة البيانات ويحمي من الكتابة فوق تعديل جلسة أخرى.
+- تبويب هوية المشروع يعرض معاينة الشعار وأيقونة الموقع قبل كل حقل مسار. تتحدث المعاينة مع تعديل المسار أو نجاح الرفع. زر الحفظ يطبّق الهوية على المشروع.
 - حقول اللوجو وfavicon تقبل مسارات ملفات محلية موجودة داخل public. رفع الصور وإدارتها كميديا مؤجل.
 - Modal العام أصبح يملك role=dialog وaria-modal وعنوانًا مرتبطًا، مع حبس Tab وإغلاق Escape واستعادة التركيز.
 - Input يربط label بالـ id ويوضح aria-invalid وaria-describedby عند الخطأ.
 - UserAvatar يعرض رمز مستخدم عامًا حتى تُربط صورة فعلية، وعلامة verified متوقفة افتراضيًا.
 - البروفايل يعرض الاسم والبريد والدور وتاريخ الحساب الحقيقيين. سجل النشاط يأتي من أحداث الحساب في API.
-- أزيلت أرقام الإيرادات والحجوزات والعملاء والشهادات الترويجية الوهمية من Landing. بقيت هوية الصفحة الداكنة والـ glass cards والتخطيط المتجاوب. تسجيل الدخول يحتفظ بتخطيط عمودين وخلفية خريطة زخرفية، مع حقول دخول فعلية.
 - تنسيق العملة يستخدم رمز العملة المطلوب فعليًا في الاتجاهين، والتواريخ القادمة من قاعدة البيانات تُعامل كـ UTC.
 - التفعيل ظاهر بحالة غير مفعّل وخيارات شهري/سنوي وحقل سيريال معطّل لحين بناء آلية التحقق.
 
 الجداول السابقة توثّق نقطة التقاط التصميم الأصلية. ملاحظات هذا القسم تصف التغييرات المقصودة في الأساس الحالي. فحص المتصفح النهائي يتم بعد إنشاء حساب أدمن حقيقي ويُسجّل في ملف QA.
+
+## استعادة تصميم تسجيل الدخول
+
+تمت استعادة التصميم من `Travneeds-CRM-old-modules/src/components/auth/LoginPage.tsx` في 18 نوفمبر 2026. الصفحة الحالية تعيد الخلفية المتدرجة والكارت الأصلي بعرض max-w-5xl، وارتفاع لوحة الخريطة 700px على desktop، وDotLottie على desktop والموبايل، والحقول وزر الدخول الدائريين وتأثيراتهما والفوتر الأصلي. الربط بالدخول الحقيقي مستمر.
+
+أزيل زر ملء البيانات التجريبية مع الإبقاء على باقي تركيب صفحة الدخول الأصلي. زر Google يوضح أن التكامل غير مجهّز، واستعادة كلمة المرور توجّه للتواصل مع مسؤول النظام. الترجمة واتجاه RTL مستخدمان مع الحفاظ على تركيب التصميم الأصلي. أي تعديل في تصميم شاشة قائمة يحتاج طلبًا صريحًا من المالك.
+
+## استعادة واجهات الحساب والداشبورد
+
+- Dashboard على / يحتفظ بالبانر والإجراءات السريعة وشبكة الكروت الستة وكارت الرسم بعرض 2/3 وكارت التوزيع بعرض 1/3 وصف التذكيرات والنشاط. يعرض النشاط أحدث الرسائل الواردة من Inbox ويفتح المحادثة عند اختيار الرسالة. تعرض الكفاءة نسبة الحجوزات المؤكدة والمكتملة من الحجوزات غير الملغاة. يعرض الرسم الكوتيشنات والحجوزات حسب الفترة المختارة مع قائمة نصية لقارئات الشاشة. تظهر قيمة الحجوزات المؤكدة والمكتملة للأدمن مجمعة حسب العملة.
+- البروفايل مستقل في قائمة الحساب. يعيد نافذة max-w-2xl بخلفية white/dark gray-800 وزوايا rounded-lg وفواصل gray-200/700 وصورة حساب دائرية 80px وحقول عمودين وزري التعديل والحفظ. الصورة تظهر رمز مستخدم حتى توجد صورة فعلية، والحقول تعرض بيانات الحساب المخزّنة.
+- الإشعارات على /notifications تعيد البانر والكارت وتابات الكل وغير المقروء وصفوف الرسائل والحالة الفارغة الأصلية. الصفحة وقائمة الجرس تقرآن نفس البيانات، والقراءة والحذف محفوظان لكل صاحب حساب.
+- سجل النشاط يعيد نافذة max-w-4xl وقائمة السجلات بالكروت الرمادية والأيقونات والشارات وفلاتر البحث والنوع والفترة. متاح كذلك على /activity من رابط الداشبورد.
+- أزيلت صفحة Landing ومراجعها من التنقل. إزالة الداتا التجريبية لا تعني حذف تصميم الصفحة أو استبداله، وأي إعادة تصميم تتطلب طلبًا صريحًا من المالك.
+
+## Restored Finance screens
+
+Financial Controls retains the archived blue heading, five rounded metric cards with watermark icons, search/status/agent/supplier filters and seven-column booking table. Reports retain tabbed overview/profit/agent views and existing chart primitives. Invoice/payment entry and booking details reuse the original white cards, controls and action styles. Arabic RTL, English LTR and light/dark tokens apply throughout. Missing source data displays an explicit connection notice and unavailable metrics; never restore demo values or decorative percentage changes.
+
+## Itemized invoice document
+
+The owner explicitly requests a professional invoice document rather than the previous summary card. Preserve the application shell/banner/forms. The standalone invoice uses white paper in either appearance, a thin blue top rule, company logo/name/contact block, prominent invoice title/number, bill-to details, date/reference metadata, numbered description/quantity/unit-price/amount rows, discount/tax/grand-total breakdown and payment terms/notes. RTL mirrors metadata and numeric alignment; currency values use bidi isolation. Tables scroll within the paper on phones. Print CSS targets A4 with 14mm margins, repeated table headings and row break protection. Browser-generated headers/footers remain controlled by its print dialog.
+
+## Travel and communications screens
+
+Quotation and Booking directories use the existing blue PageHeader, StatCard, responsive filter blocks and premium tables. The quotation editor keeps separate content-language tabs and uses localized inputs and rich text controls inside the existing application shell. Hotel and room cards follow the same field spacing. Inbox uses the same cards and controls for channel/status filters and its conversation layout. Emails uses the standard status badges and table.
+
+The quotation translation button sits alongside the content-language buttons above the builder. Settings controls its visibility. The review dialog allows suggestions to be edited before applying them to the draft.
+
+The quotation builder uses a compact, connected vertical timeline with a viewport-bounded sticky rail on desktop. The count represents the current position in the workflow. Mobile exposes the sequence through an expandable current-step control. Hotel ratings use five star controls with a clear action. Settings displays its sections in a vertical side panel on desktop. The rich-text surface groups accessible icon controls by block style, emphasis, lists, links, alignment and editing history. The link field opens on demand. Editor direction follows the selected content language independently of the interface language.
+
+The client-facing quotation keeps a travel presentation layout with a hero, media gallery, trip facts, itinerary, hotels, inclusions, pricing and terms. Its responsive and A4 presentation are generated from the same saved revision. The page and PDF set their own language and direction, with an embedded Arabic typeface for document rendering.

@@ -15,6 +15,7 @@ export const Select: React.FC<SelectProps> = ({ label, error, className, childre
     <div className={cn('ui-field space-y-1', isRTL && 'rtl-safe-field')}>
       {label && (
         <label
+          htmlFor={props.id}
           className={cn(
             'ui-field-label block text-sm font-medium text-gray-700 dark:text-gray-300',
             isRTL && 'text-right',

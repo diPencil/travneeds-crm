@@ -1,0 +1,13 @@
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS date_of_birth DATE NULL;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS nationality VARCHAR(100) NULL;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS gender ENUM('male', 'female', 'unspecified') NOT NULL DEFAULT 'unspecified';
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS address VARCHAR(500) NULL;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS emergency_contact_name VARCHAR(160) NULL;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS emergency_contact_phone VARCHAR(30) NULL;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS emergency_relationship VARCHAR(60) NULL;
+ALTER TABLE auth_sessions ADD COLUMN IF NOT EXISTS user_agent VARCHAR(512) NULL;
+ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS module_code VARCHAR(32) NULL;
+ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS details VARCHAR(500) NULL;
+ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS severity ENUM('info', 'warning', 'critical') NULL;
+ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS outcome ENUM('success', 'failure') NULL;
+ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS request_ip VARCHAR(45) NULL;
