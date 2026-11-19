@@ -207,44 +207,9 @@ export function SettingsPage() {
                           {t('common.save')}
                         </Button>
                       </form>
-                      <h2 className="text-lg font-semibold">{t('settings.exchangeRates')}</h2>
-                      {data.rates.length === 0 ? (
-                        <p className="description-sm">
-                          {isRTL
-                            ? 'أضف سعر صرف لبدء التحويل.'
-                            : 'Add an exchange rate to start converting.'}
-                        </p>
-                      ) : (
-                        <div className="table-container">
-                          <table className="table-premium">
-                            <thead>
-                              <tr>
-                                <th>{t('settings.currencyPair')}</th>
-                                <th>{t('settings.rate')}</th>
-                                <th>{t('settings.rateSource')}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {data.rates.map((rate) => (
-                                <tr key={`${rate.baseCurrency}-${rate.quoteCurrency}`}>
-                                  <td>
-                                    <bdi>
-                                      {rate.baseCurrency} / {rate.quoteCurrency}
-                                    </bdi>
-                                  </td>
-                                  <td>
-                                    <bdi>{rate.rate}</bdi>
-                                  </td>
-                                  <td>{rate.source}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
+                      <CurrencySettingsPanel data={data} onSaved={setData} />
                     </div>
                   )}
-                  {tab === 'currency' && <CurrencySettingsPanel data={data} onSaved={setData} />}
                   {tab === 'activation' && <ActivationPanel />}
                 </div>
               </CardContent>

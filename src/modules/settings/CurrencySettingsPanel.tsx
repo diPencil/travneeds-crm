@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import type { SettingsResponse } from '../../../shared/settings/settings.contracts';
+import { Pencil } from 'lucide-react';
+import type { CurrencyRate, SettingsResponse } from '../../../shared/settings/settings.contracts';
 import { useAuth } from '../auth/useAuth';
 import { useLocale } from '../../localization/useLocale';
 import { useToastContext } from '../../hooks/useToastContext';
@@ -40,6 +41,14 @@ export function CurrencySettingsPanel({
   const existing = data.rates.find(
     (rate) => rate.baseCurrency === form.baseCurrency && rate.quoteCurrency === form.quoteCurrency,
   );
+  function loadRate(rate: CurrencyRate) {
+    setForm({ ...rate, effectiveAt: rate.effectiveAt.replace(' ', 'T').slice(0, 23) });
+    setFeedback('');
+    const input = document.getElementById('rate-value');
+    input?.scrollIntoView({ block: 'center' });
+    input?.focus({ preventScroll: true });
+  }
+
   async function save(event: FormEvent) {
     event.preventDefault();
     if (!csrfToken || busy) return;
@@ -65,8 +74,8 @@ export function CurrencySettingsPanel({
       setFeedback(
         error instanceof ApiError && error.code === 'SETTINGS_CONFLICT'
           ? isRTL
-            ? 'سعر الصرف اتغير. حمّل أحدث نسخة قبل الحفظ.'
-            : 'The rate changed. Load its current version before saving.'
+            ? 'سعر الصرف اتغير. حدّث الصفحة عشان تحمل أحدث نسخة قبل الحفظ.'
+            : 'The rate changed. Refresh the page to load its latest version before saving.'
           : isRTL
             ? 'تعذّر حفظ سعر الصرف.'
             : 'Could not save the exchange rate.',
@@ -128,6 +137,7 @@ export function CurrencySettingsPanel({
       id={`rate-${key}`}
       label={label}
       value={form[key]}
+      disabled={busy}
       required
       onChange={(event) =>
         setForm((previous) => ({ ...previous, [key]: event.target.value, version: 0 }))
@@ -138,8 +148,63 @@ export function CurrencySettingsPanel({
     </Select>
   );
   return (
-    <div className="space-y-6 border-t border-gray-100 dark:border-gray-800 pt-6">
-      <form onSubmit={(event) => void addCurrency(event)} className="space-y-3">
+    <div className="space-y-6">
+      <h2 id="exchange-rates" className="text-lg font-semibold">
+        {t('settings.exchangeRates')}
+      </h2>
+      {data.rates.length === 0 ? (
+        <p className="description-sm">
+          {isRTL ? 'أضف سعر صرف لبدء التحويل.' : 'Add an exchange rate to start converting.'}
+        </p>
+      ) : (
+        <div className="table-container">
+          <table className="table-premium" aria-labelledby="exchange-rates">
+            <thead>
+              <tr>
+                <th scope="col">{t('settings.currencyPair')}</th>
+                <th scope="col">{t('settings.rate')}</th>
+                <th scope="col">{t('settings.rateSource')}</th>
+                <th scope="col">{t('common.actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.rates.map((rate) => {
+                const pair = `${rate.baseCurrency} / ${rate.quoteCurrency}`;
+                const editLabel = isRTL ? `تعديل سعر الصرف ${pair}` : `Edit exchange rate ${pair}`;
+                return (
+                  <tr key={pair}>
+                    <td>
+                      <bdi>{pair}</bdi>
+                    </td>
+                    <td>
+                      <bdi>{rate.rate}</bdi>
+                    </td>
+                    <td>{rate.source}</td>
+                    <td>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="min-h-9 min-w-9"
+                        aria-label={editLabel}
+                        title={editLabel}
+                        disabled={busy}
+                        onClick={() => loadRate(rate)}
+                      >
+                        <Pencil size={16} aria-hidden="true" />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <form
+        onSubmit={(event) => void addCurrency(event)}
+        className="space-y-3 border-t border-gray-100 pt-6 dark:border-gray-800"
+      >
         <div className="grid items-end gap-3 sm:grid-cols-[1fr_auto]">
           <Select
             id="new-project-currency"
@@ -171,10 +236,14 @@ export function CurrencySettingsPanel({
           ))}
         </ul>
       </form>
-      <h2 className="text-lg font-bold">
+      <h2 id="exchange-rate-editor" className="text-lg font-bold">
         {isRTL ? 'إضافة أو تعديل سعر صرف' : 'Add or edit an exchange rate'}
       </h2>
-      <form onSubmit={(event) => void save(event)} className="space-y-4">
+      <form
+        onSubmit={(event) => void save(event)}
+        className="space-y-4"
+        aria-labelledby="exchange-rate-editor"
+      >
         <div className="grid md:grid-cols-2 gap-4">
           {currency('baseCurrency', isRTL ? 'من عملة' : 'From currency')}
           {currency('quoteCurrency', isRTL ? 'إلى عملة' : 'To currency')}
@@ -182,6 +251,7 @@ export function CurrencySettingsPanel({
             id="rate-value"
             label={t('settings.rate')}
             value={form.rate}
+            disabled={busy}
             inputMode="decimal"
             required
             onChange={(event) => setForm((previous) => ({ ...previous, rate: event.target.value }))}
@@ -190,6 +260,8 @@ export function CurrencySettingsPanel({
             id="rate-effective"
             label={isRTL ? 'ساري من (UTC)' : 'Effective from (UTC)'}
             type="datetime-local"
+            step="0.001"
+            disabled={busy}
             required
             value={form.effectiveAt}
             onChange={(event) =>
@@ -200,6 +272,7 @@ export function CurrencySettingsPanel({
             id="rate-source"
             label={t('settings.rateSource')}
             value={form.source}
+            disabled={busy}
             maxLength={160}
             required
             onChange={(event) =>
@@ -211,12 +284,8 @@ export function CurrencySettingsPanel({
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              setForm({
-                ...existing,
-                effectiveAt: existing.effectiveAt.replace(' ', 'T').slice(0, 16),
-              })
-            }
+            disabled={busy}
+            onClick={() => loadRate(existing)}
           >
             {isRTL ? 'تحميل سعر الصرف الحالي للتعديل' : 'Load current rate for editing'}
           </Button>

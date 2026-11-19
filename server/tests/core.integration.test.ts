@@ -222,6 +222,16 @@ test(
         await page.goto(new URL('/users/logs', origin).href, { waitUntil: 'domcontentloaded' });
         await page.locator('::-p-aria(Export Logs[role="button"])').click();
         await page.waitForSelector(exportToast, { visible: true, timeout: 5000 });
+        await write('post', '/api/settings/currencies')
+          .send({
+            baseCurrency: 'USD',
+            quoteCurrency: 'GBP',
+            rate: '0.80123456',
+            effectiveAt: '2026-01-01T12:34:56.123Z',
+            source: 'Bank',
+            version: 0,
+          })
+          .expect(200);
         await page.goto(new URL('/settings', origin).href, { waitUntil: 'domcontentloaded' });
         await page.waitForSelector('[role="tablist"][aria-orientation="vertical"]');
         await page.waitForSelector('input[type="file"][accept*=".ico"]');
@@ -247,6 +257,33 @@ test(
         });
         await page.locator('#settings-tab-currency').click();
         await page.waitForSelector('#new-project-currency option[value="EUR"]');
+        await page.locator('::-p-aria(Edit exchange rate USD / GBP[role="button"])').click();
+        assert.equal(await page.$eval('input#rate-value', (input) => input.value), '0.80123456');
+        assert.equal(await page.$eval('input#rate-source', (input) => input.value), 'Bank');
+        assert.equal(
+          await page.$eval('input#rate-effective', (input) => input.value),
+          '2026-01-01T12:34:56.123',
+        );
+        assert.equal(await page.$eval(':focus', (element) => element.id), 'rate-value');
+        await page.locator('#rate-value').fill('0.82');
+        const rateSaved = page.waitForResponse(
+          (response) =>
+            new URL(response.url()).pathname === '/api/settings/currencies' &&
+            response.request().method() === 'POST',
+        );
+        await page
+          .locator('form[aria-labelledby="exchange-rate-editor"] button[type="submit"]')
+          .click();
+        assert.equal((await rateSaved).status(), 200);
+        await page.waitForSelector(
+          'table[aria-labelledby="exchange-rates"] ::-p-text(0.82000000)',
+          {
+            visible: true,
+          },
+        );
+        await page.waitForSelector('[role="status"] ::-p-text(Exchange rate saved.)', {
+          visible: true,
+        });
         await page.locator('#settings-tab-translation').click();
         const settingsSaved = '[role="status"] ::-p-text(Settings saved.)';
         await page.locator('::-p-aria(Save[role="button"])').click();

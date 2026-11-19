@@ -37,3 +37,5 @@ Quotation media integration verified a real WebP upload, authenticated retrieval
 Chromium verification of the quotation builder exercised its desktop timeline, bold formatting, link insertion, content retention across steps, Arabic editing direction, and the mobile disclosure. Desktop and mobile captures were reviewed from the isolated session.
 
 The catalogue and settings pass completed all 50 checks with Chromium enabled. The browser opened the vertical Settings navigation, found the branding upload and currency selector, selected a star rating, and verified that choosing an actual catalogue hotel filled its room in the quote. The isolated MySQL cases covered a ten-room hotel bundle, shared hotel options, automatic catalogue creation from quotation drafts, idempotency, admin-only brand uploads, and enabled currencies flowing into quote options. The development database reported all 19 migrations and zero quotation fixtures.
+
+Chromium also verified that the exchange-rate row edit button loads the saved rate, source and effective timestamp, then focuses the rate field. Saving the edit against isolated MySQL updated the row and showed the success toast.
