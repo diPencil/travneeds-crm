@@ -36,6 +36,7 @@ const labels: Record<string, TranslationKey> = {
   'auth.logout': 'audit.logout',
   'admin.bootstrap': 'audit.accountCreated',
   'settings.updated': 'audit.settingsUpdated',
+  'settings.license_activated': 'audit.licenseActivated',
   'account.profile_updated': 'audit.profileUpdated',
 };
 

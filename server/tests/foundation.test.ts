@@ -113,7 +113,8 @@ test('the configured runtime account can read the applied schema and stored conf
   const result = await readSettingsPage();
   assert.ok(result.settings.projectName.length > 0);
   assert.match(result.settings.primaryColor, /^#[a-f0-9]{6}$/i);
-  assert.equal(result.license.activationAvailable, false);
+  assert.equal(typeof result.license.activationAvailable, 'boolean');
+  assert.ok(Number.isFinite(Date.parse(result.license.serverTime)));
   assert.ok(Array.isArray(result.rates));
 });
 
@@ -214,10 +215,10 @@ test('API errors and responses do not cache session material or expose stack tra
   assert.deepEqual(response.body, { error: { code: 'NOT_FOUND' } });
 });
 
-test('activation requests have no issuing or validation endpoint', async () => {
+test('local activation requires a real session', async () => {
   await request(app)
     .post('/api/settings/activate')
     .set('Origin', env.APP_ORIGIN)
     .send({})
-    .expect(404);
+    .expect(401);
 });

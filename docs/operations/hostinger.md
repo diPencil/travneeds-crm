@@ -20,4 +20,6 @@ Use the ordinary runtime database account in the web app. Run the versioned migr
 
 After deployment, check `/api/health`, sign in over HTTPS and load a direct route such as `/customers`. Verify quotation media persistence across redeployments and try downloading an Arabic and an English quotation PDF. If the hosting runtime cannot launch the browser, the quotation page offers **Print / Save PDF**, using the same document in the visitor's browser.
 
+Migration 022 prepares the license display suffix. For a new database, sign in as an administrator and use **Settings → Activation → Activate for one month** to issue its local serial. Copy the full code when issued. The countdown reflects the database time and this installation's expiry.
+
 [Hostinger Node.js deployment](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/) · [Hostinger MySQL connection](https://www.hostinger.com/support/connecting-a-hostinger-mysql-database-to-a-node-js-application/)

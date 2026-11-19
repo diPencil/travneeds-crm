@@ -12,7 +12,7 @@ Deliver a coherent, maintainable full-stack CRM backed by the owner's existing `
 | Finance | Booking/payment read reports and itemized customer invoices, with manual or real booking inputs |
 | User Management | Real employee and administrator accounts and access rules |
 | Settings | Project name, colors, logo, favicon, base currency and future currency conversion |
-| Activation | Reserved monthly/annual licensing area, with serial issuing and validation deferred |
+| Activation | One server-issued local monthly term per installation. External license verification and renewal are deferred. |
 
 The first module source is `web-source/`. Further systems may supply selected logic. Travneeds owns the resulting domain contracts and visual identity.
 

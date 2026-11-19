@@ -413,6 +413,8 @@ The quotation translation button sits alongside the content-language buttons abo
 
 The Customer File uses the existing module banner, KPI cards, profile card, section navigation and responsive data tables. Payment and invoice sections follow Finance permissions. The timeline opens first and linked records use the original module routes.
 
+Activation uses status and plan badges, a copyable first-issue code, a masked saved code, and a four-part countdown beside the code. Manage License links to the external panel.
+
 The quotation builder uses a compact, connected vertical timeline with a viewport-bounded sticky rail on desktop. The count represents the current position in the workflow. Mobile exposes the sequence through an expandable current-step control. Hotel ratings use five star controls with a clear action. Settings displays its sections in a vertical side panel on desktop. The rich-text surface groups accessible icon controls by block style, emphasis, lists, links, alignment and editing history. The link field opens on demand. Editor direction follows the selected content language independently of the interface language.
 
 The client-facing quotation keeps a travel presentation layout with a hero, media gallery, trip facts, itinerary, hotels, inclusions, pricing and terms. Its responsive and A4 presentation are generated from the same saved revision. The page and PDF set their own language and direction, with an embedded Arabic typeface for document rendering.

@@ -13,6 +13,7 @@ import {
 } from '../../../../shared/settings/settings.contracts.js';
 import { pool, transaction } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
+import { readLicense } from './activation.service.js';
 
 const localAsset = z.string().regex(localBrandAssetPath).max(localBrandAssetPathLimit);
 export const settingsInput = z
@@ -54,11 +55,7 @@ export async function readSettings(): Promise<ProjectSettings> {
 
 export async function readSettingsPage(): Promise<SettingsResponse> {
   const settings = await readSettings();
-  const [licenses] = await pool.execute<RowDataPacket[]>(
-    'SELECT status, plan, expires_at AS expiresAt FROM installation_license WHERE id = 1',
-  );
-  const license = licenses[0];
-  if (!license) throw new HttpError(503, 'SETTINGS_UNAVAILABLE');
+  const license = await readLicense();
   const [rates] = await pool.execute<RowDataPacket[]>(
     'SELECT base_currency AS baseCurrency, quote_currency AS quoteCurrency, CAST(rate AS CHAR) AS rate, effective_at AS effectiveAt, source, version FROM currency_rates ORDER BY base_currency, quote_currency',
   );
@@ -69,12 +66,7 @@ export async function readSettingsPage(): Promise<SettingsResponse> {
     currencies: currencies.map((row) => String(row.code)),
     supportedCurrencies: Intl.supportedValuesOf('currency'),
     settings,
-    license: {
-      status: license.status,
-      plan: license.plan,
-      expiresAt: license.expiresAt,
-      activationAvailable: false,
-    },
+    license,
     rates: rates as SettingsResponse['rates'],
   };
 }

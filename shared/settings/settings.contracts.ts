@@ -17,7 +17,15 @@ export interface LicenseStatus {
   status: 'inactive' | 'active' | 'expired';
   plan: 'monthly' | 'annual' | null;
   expiresAt: string | null;
-  activationAvailable: false;
+  activatedAt: string | null;
+  serverTime: string;
+  serialSuffix: string | null;
+  activationAvailable: boolean;
+}
+
+export interface MonthlyLicenseActivation {
+  license: LicenseStatus;
+  serial: string;
 }
 
 export interface CurrencyRate {

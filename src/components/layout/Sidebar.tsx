@@ -8,10 +8,12 @@ import {
   ChevronRight,
   ClipboardList,
   LayoutDashboard,
+  LibraryBig,
   LogOut,
   MessagesSquare,
   Mail,
   Settings,
+  Truck,
   User,
   UserCheck,
   Users,
@@ -90,7 +92,7 @@ const navigationGroups: NavGroup[] = [
       },
       {
         id: 'suppliers',
-        icon: ClipboardList,
+        icon: Truck,
         labelKey: 'nav.suppliers',
         href: '/suppliers',
         subItems: [
@@ -116,7 +118,7 @@ const navigationGroups: NavGroup[] = [
       },
       {
         id: 'catalogue',
-        icon: ClipboardList,
+        icon: LibraryBig,
         labelKey: 'nav.catalogue',
         href: '/catalogue/destinations',
         subItems: catalogueKinds.map((kind) => ({

@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { BrandAssetField } from './BrandAssetField';
+import { ActivationPanel } from './ActivationPanel';
 import { useLocale } from '../../localization/useLocale';
 import { useToastContext } from '../../hooks/useToastContext';
 import { useAuth } from '../auth/useAuth';
@@ -244,44 +245,7 @@ export function SettingsPage() {
                     </div>
                   )}
                   {tab === 'currency' && <CurrencySettingsPanel data={data} onSaved={setData} />}
-                  {tab === 'activation' && (
-                    <div className="space-y-6">
-                      <h2 className="text-lg font-semibold">{t('settings.activation')}</h2>
-                      <p className="description-sm">{t('settings.activationDeferred')}</p>
-                      <p>
-                        {t('settings.licenseStatus')} —{' '}
-                        {t(`settings.license.${data.license.status}`)}
-                      </p>
-                      <div className="flex flex-wrap gap-6">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            disabled
-                            checked={data.license.plan === 'monthly'}
-                            readOnly
-                          />
-                          {t('settings.monthly')}
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            disabled
-                            checked={data.license.plan === 'annual'}
-                            readOnly
-                          />
-                          {t('settings.annual')}
-                        </label>
-                      </div>
-                      <Input
-                        id="activation-serial"
-                        label={t('settings.serial')}
-                        type="password"
-                        value=""
-                        disabled
-                        placeholder={t('settings.serialDeferred')}
-                      />
-                    </div>
-                  )}
+                  {tab === 'activation' && <ActivationPanel />}
                 </div>
               </CardContent>
             </Card>

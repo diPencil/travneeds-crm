@@ -42,7 +42,7 @@ The initial administrator is created interactively using real owner-provided det
 - Independent account profile with real profile editing, notification center, and filtered personal activity log.
 - Administrator settings for project name, primary color, existing local logo/favicon paths and base currency, with optimistic concurrency protection.
 - Administrator-maintained exchange rates and exact currency conversion. Provider settings store encrypted credentials for SMTP, Google Login, Google Cloud Translation and the Meta messaging channels.
-- Visible monthly/annual activation area. The initial license is inactive and serial validation is deferred.
+- Administrator-only local monthly activation with a server-timed expiry and a link to manage licenses. The external licensing API remains reserved.
 - Original-style User Management with actual account creation/editing/status, server-enforced admin/employee roles, active-session counts/revocation, expiring invitation links and system audit.
 - Original male/female avatar assets, a stored avatar choice and consistent account/header/sidebar display.
 - Original six-tab user detail view with database-backed personal/work data, actual sessions, capabilities, activity and metrics. System Audit Trail restores the original table, filters and full filtered CSV export.

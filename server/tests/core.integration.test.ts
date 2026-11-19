@@ -259,6 +259,18 @@ test(
         await page.waitForSelector(settingsSaved, { visible: true });
         await page.locator('::-p-aria(Test saved API key[role="button"])').click();
         await page.waitForSelector('::-p-text(The saved API key passed the connection test.)');
+        await page.locator('#settings-tab-activation').click();
+        await page.locator('::-p-aria(Activate for one month[role="button"])').click();
+        const countdown = await page.waitForSelector('[role="timer"]', { visible: true });
+        assert.ok(countdown);
+        const countdownBefore = await countdown.evaluate((node) => node.textContent);
+        await page.waitForFunction(
+          (node, before) => node.textContent !== before,
+          { timeout: 5000 },
+          countdown,
+          countdownBefore,
+        );
+        await page.waitForSelector('a[href="https://panel.dipencil.com/"]', { visible: true });
         await page.goto(new URL('/quotations/new', origin).href, { waitUntil: 'domcontentloaded' });
         await page.waitForSelector('#quotation-builder-timeline button[aria-current="step"]');
         const toolbar = 'main [aria-label="Content language"]';
@@ -403,6 +415,48 @@ after(async () => {
   mock.restoreAll();
   await pool.end();
   await isolatedPool.end();
+});
+
+test('monthly activation is admin-only, one-time, secret-safe and expires against the database clock', async () => {
+  await pool.execute(
+    "UPDATE installation_license SET status='inactive',plan=NULL,serial_digest=NULL,serial_suffix=NULL,activated_at=NULL,expires_at=NULL WHERE id=1",
+  );
+  const endpoint = '/api/settings/activate';
+  const statusPath = '/api/settings/activation';
+  const read = () => request(app).get(statusPath).set('Cookie', admin.cookie).expect(200);
+  assert.equal((await read()).body.activationAvailable, true);
+  await request(app).get(statusPath).set('Cookie', employee.cookie).expect(403);
+  await write('post', endpoint, employee).send({}).expect(403);
+  await request(app)
+    .post(endpoint)
+    .set('Cookie', admin.cookie)
+    .set('Origin', env.APP_ORIGIN)
+    .send({})
+    .expect(403);
+  await write('post', endpoint).send({ status: 'active', serial: 'UNTRUSTED' }).expect(400);
+  const results = await Promise.all([
+    write('post', endpoint).send({}),
+    write('post', endpoint).send({}),
+  ]);
+  assert.deepEqual(results.map(({ status }) => status).sort(), [201, 409]);
+  const issued = results.find(({ status }) => status === 201)?.body;
+  assert.ok(/^TN-[0-9A-F]{16}-[0-9A-F]{16}$/.test(issued.serial));
+  assert.equal(issued.license.plan, 'monthly');
+  assert.equal(issued.license.status, 'active');
+  const [rows] = await pool.query<RowDataPacket[]>(
+    'SELECT serial_digest AS digest, expires_at=DATE_ADD(activated_at,INTERVAL 1 MONTH) AS isMonthly FROM installation_license WHERE id=1',
+  );
+  assert.equal(rows[0].isMonthly, 1);
+  assert.ok(rows[0].digest !== issued.serial && rows[0].digest.length === 64);
+  const saved = (await read()).body;
+  assert.equal(saved.serialSuffix, issued.serial.slice(-6));
+  assert.equal(saved.activationAvailable, false);
+  assert.ok(!JSON.stringify(saved).includes(issued.serial));
+  await pool.execute(
+    'UPDATE installation_license SET activated_at=DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 2 MONTH),expires_at=DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 1 MONTH) WHERE id=1',
+  );
+  assert.equal((await read()).body.status, 'expired');
+  await write('post', endpoint).send({}).expect(409);
 });
 
 test('directory metrics reflect actual sessions and employees cannot administer accounts', async () => {

@@ -117,7 +117,7 @@ erDiagram
 
 The migration inserts the two role codes, the actual default project identity, and an inactive license record. It inserts no users, sessions, exchange rates or business records. USD is the initial base-currency configuration and can be changed by an administrator.
 
-Currency-rate ingestion/conversion, serial issuing, activation verification, renewal and license enforcement are deferred. No endpoint currently changes licensing status. The raw activation serial is absent from storage and application logs.
+This describes the original foundation. Migration 022 adds a display suffix to support administrator-issued local monthly activation. The raw serial stays out of MySQL and application logs. External license verification, renewal and runtime enforcement are future work.
 
 ## CRM and account management
 

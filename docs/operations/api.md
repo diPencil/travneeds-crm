@@ -21,13 +21,15 @@ All routes use the `/api` prefix. JSON errors have the shape `{ "error": { "code
 
 Login accepts `email` and `password` only. Invalid identities and passwords share a 401 `INVALID_CREDENTIALS` response. Login is limited to 10 requests per 15 minutes per IP for the current API process. The session expires after 8 hours. Server-side user status and roles are read for each session request.
 
-Mutating requests require the configured `Origin`. Authenticated mutations also require `X-CSRF-Token` matching the session. API bodies are limited to 16KB. SQL errors, hashes, cookies and raw serials are excluded from API output. Serial/activation endpoints remain unimplemented. User/role changes are restricted to administrator routes below.
+Mutating requests require the configured `Origin`. Authenticated mutations also require `X-CSRF-Token` matching the session. The standard body limit is 16KB. SQL errors, hashes and cookie values stay out of response bodies. The activation endpoint returns the newly generated serial once to the authenticated administrator. User/role changes are restricted to administrator routes below.
 
 ## Restored account and notification APIs
 
 | Method | Route | Authorization | Behavior |
 | --- | --- | --- | --- |
 | GET | /api/dashboard | Session | Returns visible quotation and non-cancelled booking counts, confirmed and completed booking counts, UTC trends, company CRM counts, assigned follow-ups and the latest six incoming messages visible in Inbox. Confirmed and completed booking value is grouped by currency and available to administrators. |
+| GET | /api/settings/activation | Admin | Current installation status, plan, suffix, UTC server time and expiry. |
+| POST | /api/settings/activate | Admin + CSRF | Issues one local monthly license. An empty request is required. Returns the serial once and rejects repeat issuance with 409. |
 | PATCH | /api/account/profile | Session, Origin, CSRF | Updates account name/email/phone/avatar with version checking and an audit event |
 | GET | /api/notifications | Session | Lists the latest 100 owned notifications and total unread count |
 | POST | /api/notifications/read-all | Session, Origin, CSRF | Persists read status for the current user's notifications |

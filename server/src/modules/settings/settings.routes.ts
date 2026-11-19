@@ -7,6 +7,7 @@ import type { AuthSession } from '../../../../shared/auth/auth.contracts.js';
 import { requireAdmin, requireCsrf, requireSession } from '../auth/auth.middleware.js';
 import { readSettings, readSettingsPage, saveSettings, settingsInput } from './settings.service.js';
 import { integrationsRouter } from './integrations.routes.js';
+import { activateMonthlyLicense, readLicense } from './activation.service.js';
 import {
   saveCurrencyRate,
   convertStoredCurrency,
@@ -16,6 +17,22 @@ import {
 
 export const settingsRouter = Router();
 settingsRouter.use('/integrations', integrationsRouter);
+settingsRouter.get('/activation', requireSession, requireAdmin, async (_request, response) => {
+  response.json(await readLicense());
+});
+settingsRouter.post(
+  '/activate',
+  requireSession,
+  requireAdmin,
+  requireCsrf,
+  async (request, response) => {
+    z.object({})
+      .strict()
+      .parse(request.body ?? {});
+    const { user } = response.locals.session as AuthSession;
+    response.status(201).json(await activateMonthlyLicense(user.id));
+  },
+);
 settingsRouter.get('/brand-assets/:file', async (request, response) => {
   const file = z.string().max(48).parse(request.params.file);
   const asset = await readBrandAsset(`/api/settings/brand-assets/${file}`);
