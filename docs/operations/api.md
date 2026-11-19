@@ -30,6 +30,8 @@ Mutating requests require the configured `Origin`. Authenticated mutations also 
 | GET | /api/dashboard | Session | Returns visible quotation and non-cancelled booking counts, confirmed and completed booking counts, UTC trends, company CRM counts, assigned follow-ups and the latest six incoming messages visible in Inbox. Confirmed and completed booking value is grouped by currency and available to administrators. |
 | GET | /api/settings/activation | Admin | Current installation status, plan, suffix, UTC server time and expiry. |
 | POST | /api/settings/activate | Admin + CSRF | Issues one local monthly license. An empty request is required. Returns the serial once and rejects repeat issuance with 409. |
+| GET | /api/inbox | Session | Lists visible conversations. Optional `leadId` limits the list to threads linked to that lead. |
+| PATCH | /api/inbox/:id/lead | Admin + CSRF | Creates or links a lead for a social conversation using the current link as a concurrency check. See the travel and communications API notes. |
 | PATCH | /api/account/profile | Session, Origin, CSRF | Updates account name/email/phone/avatar with version checking and an audit event |
 | GET | /api/notifications | Session | Lists the latest 100 owned notifications and total unread count |
 | POST | /api/notifications/read-all | Session, Origin, CSRF | Persists read status for the current user's notifications |

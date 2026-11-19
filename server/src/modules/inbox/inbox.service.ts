@@ -2,9 +2,11 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { Pool, PoolConnection, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { AuthUser } from '../../../../shared/auth/auth.contracts.js';
 import type { MetaChannel } from '../../../../shared/inbox/inbox.contracts.js';
+import type { LeadSource } from '../../../../shared/crm/crm.contracts.js';
 import { pool, transaction } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
 import { writeAuditEvent } from '../audit/audit.repository.js';
+import { createInboxLead } from '../crm/crm.service.js';
 import { readMessages, staffThread } from './inbox.repository.js';
 import { prepareMetaReply, type MetaIncoming, type MetaStatus } from './meta-messaging.js';
 
@@ -190,6 +192,98 @@ export async function linkInboxCustomer(
     });
   });
 }
+
+const sourcesByChannel = {
+  messenger: 'Facebook Messenger',
+  instagram: 'Instagram',
+  whatsapp: 'WhatsApp',
+} satisfies Record<MetaChannel, LeadSource>;
+
+async function readThreadLinks(connection: PoolConnection, threadId: string) {
+  const [[links]] = await connection.execute<
+    (RowDataPacket & { leadId: string | null; customerId: string | null })[]
+  >(
+    `SELECT CAST(l.lead_id AS CHAR) AS leadId, CAST(c.customer_id AS CHAR) AS customerId
+     FROM inbox_threads t
+     LEFT JOIN inbox_lead_links l ON l.thread_id=t.id
+     LEFT JOIN inbox_customer_links c ON c.thread_id=t.id
+     WHERE t.id=?`,
+    [threadId],
+  );
+  return links;
+}
+
+async function createThreadLead(
+  connection: PoolConnection,
+  thread: { id: string; channel: MetaChannel; contactKey: string; contactName: string },
+  actorId: string | null,
+) {
+  const { id, channel, contactKey, contactName } = thread;
+  const leadId = await createInboxLead(
+    connection,
+    {
+      fullName: Array.from(contactName.trim() || contactKey)
+        .slice(0, 160)
+        .join(''),
+      phone: channel === 'whatsapp' && /^[1-9]\d{6,14}$/.test(contactKey) ? `+${contactKey}` : null,
+      source: sourcesByChannel[channel],
+    },
+    actorId,
+  );
+  await connection.execute('INSERT INTO inbox_lead_links (thread_id,lead_id) VALUES (?,?)', [
+    id,
+    leadId,
+  ]);
+  return leadId;
+}
+
+export async function linkInboxLead(
+  actor: AuthUser,
+  id: string,
+  input: { leadId: string | null; previousLeadId: string | null },
+) {
+  return transaction(async (connection) => {
+    const thread = await staffThread(connection, actor, id, true);
+    if (thread.channel === 'web') throw new HttpError(409, 'QUOTATION_THREAD_LEAD_DISABLED');
+    const links = await readThreadLinks(connection, id);
+    if (links.leadId && (input.leadId === links.leadId || input.leadId === null))
+      return { leadId: links.leadId };
+    if (links.customerId) throw new HttpError(409, 'CONVERSATION_HAS_CUSTOMER');
+    if (input.previousLeadId !== links.leadId) throw new HttpError(409, 'RECORD_CHANGED');
+    if (input.leadId === null) {
+      const leadId = await createThreadLead(
+        connection,
+        {
+          id,
+          channel: thread.channel,
+          contactKey: thread.contact_key,
+          contactName: thread.contact_name,
+        },
+        actor.id,
+      );
+      return { leadId };
+    }
+    const [[lead]] = await connection.execute<RowDataPacket[]>(
+      'SELECT id FROM leads WHERE id=? AND archived_at IS NULL FOR UPDATE',
+      [input.leadId],
+    );
+    if (!lead) throw new HttpError(404, 'NOT_FOUND');
+    await connection.execute(
+      `INSERT INTO inbox_lead_links (thread_id,lead_id) VALUES (?,?)
+       ON DUPLICATE KEY UPDATE lead_id=VALUES(lead_id)`,
+      [id, input.leadId],
+    );
+    await writeAuditEvent(connection, {
+      actorId: actor.id,
+      action: 'inbox.lead_linked',
+      entityType: 'conversation',
+      entityId: id,
+      module: 'inbox',
+    });
+    return { leadId: input.leadId };
+  });
+}
+
 export async function receiveMeta(
   channel: MetaChannel,
   account: string,
@@ -197,6 +291,9 @@ export async function receiveMeta(
   statuses: MetaStatus[],
 ) {
   for (const message of messages) {
+    const now = new Date();
+    const receivedAt = message.sentAt.getTime() > now.getTime() ? now : message.sentAt;
+    if (!Number.isFinite(receivedAt.getTime()) || receivedAt.getUTCFullYear() < 2000) continue;
     await transaction(async (connection) => {
       await connection.execute(
         `INSERT INTO inbox_threads (id,channel,account_key,contact_key,contact_name)
@@ -213,9 +310,6 @@ export async function receiveMeta(
         [id, message.key],
       );
       if (existing.length) return;
-      const now = new Date();
-      const receivedAt = message.sentAt.getTime() > now.getTime() ? now : message.sentAt;
-      if (!Number.isFinite(receivedAt.getTime()) || receivedAt.getUTCFullYear() < 2000) return;
       await connection.execute(
         `INSERT INTO inbox_messages (thread_id,direction,body,delivery,provider_key,created_at)
         VALUES (?,'incoming',?,'received',?,?)`,
@@ -226,6 +320,14 @@ export async function receiveMeta(
         last_message_at=GREATEST(last_message_at,?),last_inbound_at=GREATEST(COALESCE(last_inbound_at,?),?) WHERE id=?`,
         [message.name, receivedAt, receivedAt, receivedAt, id],
       );
+      const links = await readThreadLinks(connection, id);
+      if (!links.leadId && !links.customerId) {
+        await createThreadLead(
+          connection,
+          { id, channel, contactKey: message.contact, contactName: message.name },
+          null,
+        );
+      }
     });
   }
   for (const entry of statuses) {

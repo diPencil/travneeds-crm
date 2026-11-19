@@ -12,6 +12,7 @@ import {
   guestHistory,
   guestMessage,
   linkInboxCustomer,
+  linkInboxLead,
   receiveMeta,
   setThreadState,
   staffReply,
@@ -34,6 +35,7 @@ inboxRouter.get('/', async (request, response) => {
       search: z.string().trim().max(120).default(''),
       channel: z.enum(inboxChannels).optional(),
       status: state.optional(),
+      leadId: numericId.optional(),
       page: z.coerce.number().int().min(1).max(10000).default(1),
     })
     .strict()
@@ -66,6 +68,15 @@ inboxRouter.patch('/:id/customer', requireAdmin, requireCsrf, async (request, re
     .parse(request.body);
   await linkInboxCustomer(response.locals.session.user, z.uuid().parse(request.params.id), input);
   response.status(204).end();
+});
+inboxRouter.patch('/:id/lead', requireAdmin, requireCsrf, async (request, response) => {
+  const input = z
+    .object({ leadId: numericId.nullable(), previousLeadId: numericId.nullable() })
+    .strict()
+    .parse(request.body);
+  response.json(
+    await linkInboxLead(response.locals.session.user, z.uuid().parse(request.params.id), input),
+  );
 });
 inboxRouter.post('/:id/messages', requireCsrf, limiter(30), async (request, response) => {
   const input = messageInput.parse(request.body);

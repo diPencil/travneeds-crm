@@ -13,6 +13,8 @@ export interface InboxThread {
   unread: number;
   quotationId: string | null;
   customerId: string | null;
+  leadId: string | null;
+  directCustomerId: string | null;
 }
 export interface InboxMessage {
   id: string;

@@ -1,7 +1,13 @@
 import type { AuthUser } from '../../../../shared/auth/auth.contracts.js';
 import type { PoolConnection, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { z } from 'zod';
-import type { CrmKind, CrmDirectory, CrmRecord } from '../../../../shared/crm/crm.contracts.js';
+import type {
+  CrmKind,
+  CrmDirectory,
+  CrmRecord,
+  LeadSource,
+} from '../../../../shared/crm/crm.contracts.js';
+import { writeAuditEvent } from '../audit/audit.repository.js';
 import { pool, transaction } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
 import { customerInput, leadInput, supplierInput, listInput } from './crm.validation.js';
@@ -264,6 +270,27 @@ export async function archiveRecord(
     );
     await audit(connection, actor, kind, id, archived ? 'archived' : 'restored');
   });
+}
+
+export async function createInboxLead(
+  connection: PoolConnection,
+  input: { fullName: string; phone: string | null; source: LeadSource },
+  actorId: string | null,
+) {
+  const [result] = await connection.execute<ResultSetHeader>(
+    `INSERT INTO leads (full_name,phone,source,type,priority,status,created_by)
+     VALUES (?,?,?,'B2C','Medium','New',?)`,
+    [input.fullName, input.phone, input.source, actorId],
+  );
+  const id = String(result.insertId);
+  await writeAuditEvent(connection, {
+    actorId,
+    action: 'leads.created_from_inbox',
+    entityType: 'leads',
+    entityId: id,
+    module: 'leads',
+  });
+  return id;
 }
 export async function convertLead(id: string, version: number, actor: string, customerId?: string) {
   return handleConflict(() =>

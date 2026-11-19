@@ -34,11 +34,14 @@ To set up automatic translation, enable the Cloud Translation API and billing in
 | GET/POST /api/public/inbox/:shareId | Share token required. Same-origin writes, idempotent message key and rate limits. |
 | GET /api/inbox, GET /api/inbox/:id, GET/POST /api/inbox/:id/messages, PATCH /api/inbox/:id | Staff inbox, direct conversation lookup, message history/replies, mark read, close/reopen. Owners see their quotation threads. Social threads are in the admin queue. |
 | PATCH /api/inbox/:id/customer | Admin-only link or unlink for a social thread, with CSRF and the previous linked customer ID to prevent stale changes. Existing messages follow the explicit link into Customer File. |
+| PATCH /api/inbox/:id/lead | Admin with CSRF. Accepts `leadId` and `previousLeadId` as numeric strings or null. Null `leadId` creates a lead for an eligible thread and returns its ID. An existing ID links an unarchived lead. Requests to create on an already-linked thread return its current lead. A stale link or an explicit customer link can return 409. |
 | GET/POST /api/webhooks/meta/:channel | Provider challenge verification or HMAC-SHA256 validation of the exact body. Scoped to the channel's configured provider account. |
 | GET /api/emails | Admin-wide or sender-only delivery history, filter and pagination. |
 | POST /api/emails/quotation/:id | Uses a valid current share, stored customer email, request key and optional PDF. An SMTP acceptance is recorded separately from failed or uncertain delivery. |
 
 Inbox web chat polls every five seconds while a conversation is open. Meta adapters handle text messages. WhatsApp delivery/read callbacks can update accepted records. The inbox enforces a 24-hour reply window for provider messages and does not initiate template or bulk outreach. Confirm provider status before resending an uncertain delivery.
+
+The first new verified text from a social conversation creates a New lead when the conversation has neither a lead nor an explicit customer link. Subsequent messages reuse the link. Leads can also be created manually with any of the three named sources. Administrators can link existing social conversations to a lead from Inbox. Messenger and Instagram use the sender ID when their event has no display name. WhatsApp can supply a display name and international phone number. Staff confirm matches across channels by linking them to the same lead. Existing conversations are eligible for manual linking or automatic intake on the next new message. Lead conversion carries the linked conversation into Customer File under the same Inbox access scope.
 
 ## Deployment and provider setup
 

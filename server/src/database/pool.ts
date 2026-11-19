@@ -66,6 +66,7 @@ export async function checkDatabase(): Promise<void> {
     '020_customer_invoice_links',
     '021_inbox_customer_links',
     '022_local_monthly_activation',
+    '023_inbox_lead_links',
   ];
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT COUNT(*) AS count FROM schema_migrations WHERE version IN (${migrations.map(() => '?').join(', ')})`,

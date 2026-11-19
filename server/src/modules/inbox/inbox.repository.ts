@@ -10,10 +10,13 @@ import { pool } from '../../database/pool.js';
 import { HttpError } from '../../http/errors.js';
 
 const columns = `t.id,t.channel,t.contact_name AS contactName,t.status,t.last_message_at AS lastMessageAt,t.last_inbound_at AS lastInboundAt,
- CAST(s.quotation_id AS CHAR) AS quotationId,CAST(link.customer_id AS CHAR) AS customerId,
+ CAST(s.quotation_id AS CHAR) AS quotationId,CAST(COALESCE(link.customer_id,l.converted_customer_id) AS CHAR) AS customerId,
+ CAST(leadLink.lead_id AS CHAR) AS leadId,CAST(link.customer_id AS CHAR) AS directCustomerId,
  (SELECT COUNT(*) FROM inbox_messages m WHERE m.thread_id=t.id AND m.direction='incoming' AND m.read_at IS NULL) AS unread`;
 const from = `FROM inbox_threads t LEFT JOIN quotation_shares s ON s.id=t.quotation_share_id
- LEFT JOIN inbox_customer_links link ON link.thread_id=t.id`;
+ LEFT JOIN inbox_customer_links link ON link.thread_id=t.id
+ LEFT JOIN inbox_lead_links leadLink ON leadLink.thread_id=t.id
+ LEFT JOIN leads l ON l.id=leadLink.lead_id`;
 
 export function threadScope(actor: AuthUser) {
   return actor.roles.includes('admin')
@@ -52,6 +55,7 @@ export interface ThreadRow extends RowDataPacket {
   channel: InboxChannel;
   account_key: string;
   contact_key: string;
+  contact_name: string;
   status: 'open' | 'closed';
   last_inbound_at: string | null;
 }
@@ -71,7 +75,13 @@ export async function staffThread(
 }
 export async function listThreads(
   actor: AuthUser,
-  options: { search: string; channel?: InboxChannel; status?: 'open' | 'closed'; page: number },
+  options: {
+    search: string;
+    channel?: InboxChannel;
+    status?: 'open' | 'closed';
+    leadId?: string;
+    page: number;
+  },
 ) {
   const { clause: scoped, values: scopeValues } = threadScope(actor);
   const filters = [scoped];
@@ -87,6 +97,12 @@ export async function listThreads(
   if (options.status) {
     filters.push('t.status=?');
     values.push(options.status);
+  }
+  if (options.leadId) {
+    filters.push(
+      'EXISTS (SELECT 1 FROM inbox_lead_links ll WHERE ll.thread_id=t.id AND ll.lead_id=?)',
+    );
+    values.push(options.leadId);
   }
   const where = filters.join(' AND ');
   const [[rows], [counts], [stats]] = await Promise.all([

@@ -22,6 +22,9 @@ const sourceColors: Record<DashboardOverview['leadSources'][number]['source'], s
   Email: '#0e7490',
   'Walk-in': '#b45309',
   'Cold Call': '#be185d',
+  'Facebook Messenger': '#1d4ed8',
+  Instagram: '#db2777',
+  WhatsApp: '#15803d',
 };
 
 export function DashboardCharts({ data }: { data: DashboardOverview }) {

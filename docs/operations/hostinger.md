@@ -24,4 +24,6 @@ After deployment, check `/api/health`, sign in over HTTPS and load a direct rout
 
 Migration 022 prepares the license display suffix. For a new database, sign in as an administrator and use **Settings → Activation → Activate for one month** to issue its local serial. Copy the full code when issued. The countdown reflects the database time and this installation's expiry.
 
+Apply migration 023 before deploying social Inbox lead intake. Startup checks for the migration, and existing messages and explicit customer links are preserved.
+
 [Hostinger Node.js deployment](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/) · [Hostinger MySQL connection](https://www.hostinger.com/support/connecting-a-hostinger-mysql-database-to-a-node-js-application/)

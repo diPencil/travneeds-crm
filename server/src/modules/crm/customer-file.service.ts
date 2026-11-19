@@ -52,8 +52,10 @@ function sources(id: string, actor: AuthUser) {
         LEFT JOIN quotations q ON q.id=s.quotation_id
         LEFT JOIN quotation_revisions r ON r.quotation_id=s.quotation_id AND r.version=s.quotation_version
         LEFT JOIN inbox_customer_links link ON link.thread_id=t.id
+        LEFT JOIN inbox_lead_links leadLink ON leadLink.thread_id=t.id
+        LEFT JOIN leads inboxLead ON inboxLead.id=leadLink.lead_id
         WHERE ((t.channel='web' AND ${snapshotCustomer})
-          OR (t.channel<>'web' AND link.customer_id=?)) AND ${inbox.clause}`,
+          OR (t.channel<>'web' AND COALESCE(link.customer_id,inboxLead.converted_customer_id)=?)) AND ${inbox.clause}`,
       values: [id, id, ...inbox.values],
     },
     emails: {

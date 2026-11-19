@@ -15,7 +15,11 @@ export const leadSources = [
   'Email',
   'Walk-in',
   'Cold Call',
+  'Facebook Messenger',
+  'Instagram',
+  'WhatsApp',
 ] as const;
+export type LeadSource = (typeof leadSources)[number];
 export const leadPriorities = ['High', 'Medium', 'Low'] as const;
 export const customerStatuses = ['Active', 'VIP', 'Recurring', 'Suspended'] as const;
 export const customerTypes = ['Individual', 'Corporate'] as const;

@@ -14,7 +14,7 @@ import { useLocale } from '../../localization/useLocale';
 import { useAuth } from '../auth/useAuth';
 import { useQuotationText } from '../quotations/quotation.labels';
 import { Conversation, type History } from './Conversation';
-import { InboxCustomerLink } from './InboxCustomerLink';
+import { InboxCrmLink } from './InboxCrmLink';
 
 interface Directory {
   threads: InboxThread[];
@@ -29,7 +29,9 @@ export function InboxPage() {
   const [page, setPage] = useState(1);
   const [params, setParams] = useSearchParams();
   const threadId = params.get('thread');
+  const leadId = params.get('leadId');
   const query = new URLSearchParams({ page: String(page) });
+  if (leadId) query.set('leadId', leadId);
   for (const [key, value] of Object.entries(filters)) if (value) query.set(key, value);
   const resource = useApiResource<Directory>(`/inbox?${query}`);
   const { reload } = resource;
@@ -74,6 +76,24 @@ export function InboxPage() {
       </div>
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(16rem,1fr)_2fr]">
         <section className="space-y-3 rounded-3xl bg-white p-4 dark:bg-gray-900">
+          {leadId && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Link className="text-sm text-blue-700 dark:text-blue-300" to={`/leads/${leadId}`}>
+                {text('Lead', 'ليد')} · <bdi>LD-{leadId}</bdi>
+              </Link>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setPage(1);
+                  setParams(threadId ? { thread: threadId } : {});
+                }}
+              >
+                {text('Clear lead filter', 'إلغاء فلتر الليد')}
+              </Button>
+            </div>
+          )}
           <Input
             aria-label={text('Search customer', 'بحث العميل')}
             value={filters.search}
@@ -108,7 +128,7 @@ export function InboxPage() {
                 <button
                   type="button"
                   aria-pressed={active?.id === thread.id}
-                  onClick={() => setParams({ thread: thread.id })}
+                  onClick={() => setParams({ ...(leadId ? { leadId } : {}), thread: thread.id })}
                   className={`w-full rounded-xl px-3 py-2 text-start ${active?.id === thread.id ? 'bg-blue-50 dark:bg-blue-950' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                 >
                   <span className="block font-semibold" dir="auto">
@@ -230,11 +250,23 @@ function StaffConversation({
         </div>
       </header>
       {thread.channel !== 'web' && user?.roles.includes('admin') && (
-        <InboxCustomerLink
-          threadId={thread.id}
-          customerId={thread.customerId}
-          onSaved={afterChange}
-        />
+        <>
+          <InboxCrmLink
+            kind="lead"
+            threadId={thread.id}
+            recordId={thread.leadId}
+            previousId={thread.leadId}
+            allowEdit={!thread.directCustomerId}
+            onSaved={afterChange}
+          />
+          <InboxCrmLink
+            kind="customer"
+            threadId={thread.id}
+            recordId={thread.customerId}
+            previousId={thread.directCustomerId}
+            onSaved={afterChange}
+          />
+        </>
       )}
       {error && (
         <p role="alert" className="mb-3 text-rose-600">

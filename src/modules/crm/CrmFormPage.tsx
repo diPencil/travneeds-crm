@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, User, Building2, FileText } from 'lucide-react';
 import type { CrmKind, CrmOptions, CrmRecord } from '../../../shared/crm/crm.contracts';
 import {
@@ -206,10 +206,20 @@ function CrmForm({
         <PageHeader
           title={`${isRTL ? (readOnly ? 'تفاصيل ' : record ? 'تعديل ' : 'إضافة ') : readOnly ? 'View ' : record ? 'Edit ' : 'New '}${name}`}
           actions={
-            <Button className="bg-white/10 text-white" onClick={() => navigate(`/${kind}`)}>
-              <ArrowLeft className="w-5 h-5" />
-              {isRTL ? 'رجوع' : 'Back'}
-            </Button>
+            <>
+              {kind === 'leads' && record && readOnly && (
+                <Link
+                  to={`/inbox?leadId=${record.id}`}
+                  className="rounded-xl bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/20"
+                >
+                  {isRTL ? 'محادثات الليد' : 'Lead conversations'}
+                </Link>
+              )}
+              <Button className="bg-white/10 text-white" onClick={() => navigate(`/${kind}`)}>
+                <ArrowLeft className="w-5 h-5" />
+                {isRTL ? 'رجوع' : 'Back'}
+              </Button>
+            </>
           }
         />
         <form onSubmit={(event) => void save(event)} className="space-y-6">

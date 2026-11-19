@@ -114,6 +114,11 @@ test(
       "INSERT INTO inbox_messages (thread_id,direction,body,delivery) VALUES (?,'incoming',?,'received')",
       [inboxThreadId, 'Browser incoming message'],
     );
+    const socialThreadId = randomUUID();
+    await pool.execute(
+      "INSERT INTO inbox_threads (id,channel,account_key,contact_key,contact_name) VALUES (?,'instagram','555','666','Browser social contact')",
+      [socialThreadId],
+    );
     assert.equal(origin.hostname, '127.0.0.1');
     assert.notEqual(origin.port, '5173', 'The browser test needs its own port');
     await write('post', '/api/quotations')
@@ -190,6 +195,22 @@ test(
         await page.locator(`a[href="/inbox?thread=${inboxThreadId}"]`).click();
         await page.waitForSelector('main ::-p-text(Browser inbox contact)', { visible: true });
         await page.waitForSelector('main ::-p-text(Browser incoming message)', { visible: true });
+        await page.goto(new URL(`/inbox?thread=${socialThreadId}`, origin).href, {
+          waitUntil: 'domcontentloaded',
+        });
+        await page.locator('::-p-aria(Create lead[role="button"])').click();
+        await page.waitForSelector('[role="status"] ::-p-text(Conversation linked to lead.)', {
+          visible: true,
+        });
+        await page.locator('main a[href^="/leads/"]').click();
+        const filteredInbox = page.waitForResponse((response) => {
+          const url = new URL(response.url());
+          return url.pathname === '/api/inbox' && url.searchParams.has('leadId');
+        });
+        await page.locator('::-p-aria(Lead conversations[role="link"])').click();
+        assert.equal((await filteredInbox).status(), 200);
+        await page.locator('::-p-aria(Browser social contact Instagram[role="button"])').click();
+        await page.waitForSelector('main h2::-p-text(Browser social contact)', { visible: true });
         await page.goto(new URL('/customers', origin).href, { waitUntil: 'domcontentloaded' });
         await page
           .locator('::-p-aria(Customer File for Browser file customer[role="link"])')
@@ -1464,7 +1485,7 @@ test('Meta webhooks require a signature, scope incoming messages and deduplicate
     })
     .expect(200);
   assert.equal(challenge.text, '129');
-  const webhook = (account: string) =>
+  const webhook = (account: string, key = `mid-${suffix}`) =>
     JSON.stringify({
       object: 'page',
       entry: [
@@ -1475,7 +1496,7 @@ test('Meta webhooks require a signature, scope incoming messages and deduplicate
               sender: { id: '432' },
               recipient: { id: account },
               timestamp: Date.now(),
-              message: { mid: `mid-${suffix}`, text: 'Incoming provider message' },
+              message: { mid: key, text: 'Incoming provider message' },
             },
           ],
         },
@@ -1499,6 +1520,19 @@ test('Meta webhooks require a signature, scope incoming messages and deduplicate
     .expect(200);
   assert.equal(adminInbox.body.total, 1);
   assert.equal(adminInbox.body.threads[0].unread, 1);
+  const threadId: string = adminInbox.body.threads[0].id;
+  const automaticLeadId: string = adminInbox.body.threads[0].leadId;
+  assert.match(automaticLeadId, /^\d+$/);
+  const socialLeads = await request(app)
+    .get('/api/crm/leads')
+    .query({ source: 'Facebook Messenger' })
+    .set('Cookie', admin.cookie)
+    .expect(200);
+  assert.deepEqual(
+    socialLeads.body.records.map((row: { id: string }) => row.id),
+    [automaticLeadId],
+  );
+  assert.equal(socialLeads.body.records[0].status, 'New');
   const employeeInbox = await request(app)
     .get('/api/inbox?channel=messenger')
     .set('Cookie', employee.cookie)
@@ -1528,6 +1562,31 @@ test('Meta webhooks require a signature, scope incoming messages and deduplicate
     .send({ customerId: null, previousCustomerId: customerId })
     .expect(204);
   assert.deepEqual((await customerInbox()).body.rows, []);
+  const leadLink = `/api/inbox/${threadId}/lead`;
+  const existingLead = await write('post', '/api/crm/leads')
+    .send({ ...lead, source: 'Facebook Messenger' })
+    .expect(201);
+  const nextLeadId: string = existingLead.body.id;
+  await write('patch', leadLink, employee)
+    .send({ leadId: nextLeadId, previousLeadId: automaticLeadId })
+    .expect(403);
+  await write('patch', leadLink).send({ leadId: nextLeadId, previousLeadId: null }).expect(409);
+  await write('patch', leadLink)
+    .send({ leadId: nextLeadId, previousLeadId: automaticLeadId })
+    .expect(200, { leadId: nextLeadId });
+  const secondMessage = webhook('321', `second-${suffix}`);
+  await sendWebhook(secondMessage, signatureFor(secondMessage)).expect(200);
+  const linked = await request(app)
+    .get(`/api/inbox?leadId=${nextLeadId}`)
+    .set('Cookie', admin.cookie)
+    .expect(200);
+  assert.equal(linked.body.total, 1);
+  assert.equal(linked.body.threads[0].unread, 2);
+  await write('post', `/api/crm/leads/${nextLeadId}/convert`)
+    .send({ version: 1, customerId })
+    .expect(200, { customerId });
+  assert.equal((await customerInbox()).body.rows.length, 2);
+  assert.deepEqual((await customerInbox(employee)).body.rows, []);
   await request(app)
     .get(`/api/inbox/${adminInbox.body.threads[0].id}`)
     .set('Cookie', employee.cookie)
@@ -1546,6 +1605,107 @@ test('Meta webhooks require a signature, scope incoming messages and deduplicate
       ),
       visible,
     );
+  }
+});
+
+test('Instagram and WhatsApp create one sourced lead per signed conversation', async () => {
+  const sender = '201012345678';
+  const accountId = '321654';
+  const businessAccountId = '456123';
+  const secrets = {
+    appSecret: randomBytes(24).toString('hex'),
+    verifyToken: 'verify-test',
+    accessToken: 'token-test',
+  };
+  const fixtures = [
+    {
+      channel: 'instagram',
+      source: 'Instagram',
+      fullName: sender,
+      phone: null,
+      fields: { accountId, apiVersion: 'v27.0' },
+      body: {
+        object: 'instagram',
+        entry: [
+          {
+            id: accountId,
+            messaging: [
+              {
+                sender: { id: sender },
+                recipient: { id: accountId },
+                timestamp: Date.now(),
+                message: { mid: randomUUID(), text: 'Instagram inquiry' },
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      channel: 'whatsapp',
+      source: 'WhatsApp',
+      fullName: 'WhatsApp contact',
+      phone: `+${sender}`,
+      fields: { accountId, businessAccountId, apiVersion: 'v27.0' },
+      body: {
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: businessAccountId,
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  metadata: { phone_number_id: accountId },
+                  contacts: [{ wa_id: sender, profile: { name: 'WhatsApp contact' } }],
+                  messages: [
+                    {
+                      from: sender,
+                      id: randomUUID(),
+                      timestamp: String(Math.floor(Date.now() / 1000)),
+                      type: 'text',
+                      text: { body: 'WhatsApp inquiry' },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ];
+  for (const fixture of fixtures) {
+    await write('patch', `/api/settings/integrations/${fixture.channel}`)
+      .send({ enabled: true, fields: fixture.fields, secrets, clearSecrets: [], version: 0 })
+      .expect(200);
+    const body = JSON.stringify(fixture.body);
+    const signature =
+      'sha256=' + createHmac('sha256', secrets.appSecret).update(body).digest('hex');
+    const send = () =>
+      request(app)
+        .post(`/api/webhooks/meta/${fixture.channel}`)
+        .type('application/json')
+        .set('X-Hub-Signature-256', signature)
+        .send(body)
+        .expect(200);
+    await Promise.all([send(), send()]);
+    const response = await request(app)
+      .get('/api/crm/leads')
+      .query({ source: fixture.source, search: fixture.fullName })
+      .set('Cookie', admin.cookie)
+      .expect(200);
+    assert.equal(response.body.total, 1);
+    assert.equal(response.body.records[0].phone, fixture.phone);
+    assert.equal(response.body.records[0].status, 'New');
+    const inbox = await request(app)
+      .get('/api/inbox')
+      .query({ leadId: response.body.records[0].id })
+      .set('Cookie', admin.cookie)
+      .expect(200);
+    assert.equal(inbox.body.total, 1);
+    assert.equal(inbox.body.threads[0].channel, fixture.channel);
+    assert.equal(inbox.body.threads[0].unread, 1);
   }
 });
 
