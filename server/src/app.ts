@@ -5,6 +5,8 @@ import { inboxRouter, metaWebhookRouter, publicInboxRouter } from './modules/inb
 import { bookingsRouter } from './modules/bookings/bookings.routes.js';
 import express from 'express';
 import helmet from 'helmet';
+import path from 'node:path';
+import { env } from './config/env.js';
 import { checkDatabase } from './database/pool.js';
 import { auditRouter } from './modules/audit/audit.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
@@ -63,5 +65,34 @@ app.use('/api/quotations', quotationsRouter);
 app.use('/api/public/quotations', publicQuotationsRouter);
 app.use('/api/quotation-media', quotationMediaRouter);
 app.use('/api/content-translation', translationRouter);
+// API misses return JSON even when the same process serves browser routes.
+app.use('/api', (_request, response) =>
+  response.status(404).json({ error: { code: 'NOT_FOUND' } }),
+);
+if (env.NODE_ENV === 'production') {
+  const webRoot = path.resolve('dist/web');
+  app.use(
+    helmet.contentSecurityPolicy({
+      directives: {
+        scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+        connectSrc: [
+          "'self'",
+          'https://lottie.host',
+          'https://cdn.jsdelivr.net',
+          'https://unpkg.com',
+        ],
+        frameSrc: ["'self'"],
+      },
+    }),
+  );
+  app.use(express.static(webRoot, { index: false }));
+  app.get('/{*browserPath}', (request, response, next) => {
+    if (path.extname(request.path) || !request.accepts('html')) {
+      next();
+      return;
+    }
+    response.set('Cache-Control', 'no-cache').sendFile(path.join(webRoot, 'index.html'));
+  });
+}
 app.use((_request, response) => response.status(404).json({ error: { code: 'NOT_FOUND' } }));
 app.use(errorHandler);

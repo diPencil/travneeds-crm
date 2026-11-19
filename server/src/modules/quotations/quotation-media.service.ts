@@ -71,7 +71,7 @@ export function quotationMediaDirectory(): string {
     /^travneeds_crm_test_[a-f0-9]{12}$/.test(env.DB_NAME);
   return isolated
     ? path.join(os.tmpdir(), 'travneeds-quotation-media', env.DB_NAME)
-    : path.resolve('server/storage/quotation-media');
+    : path.resolve(env.QUOTATION_MEDIA_DIRECTORY ?? 'server/storage/quotation-media');
 }
 function quotationMediaFilename(key: string): string {
   if (!/^[a-f0-9-]{36}\.(png|jpg|webp)$/.test(key) || path.basename(key) !== key)

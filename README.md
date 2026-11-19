@@ -68,7 +68,7 @@ npm audit
 
 The check command verifies Prettier formatting and runs ESLint, frontend/backend type checks, foundation tests, isolated full-stack integration tests and both production builds. Local HTTP and MySQL tests require an environment permitting local sockets. Integration tests use the existing migration identity to create and remove a randomly named local test database. They create no MySQL users or grants and never seed the development database. Keep migration credentials available only to the local operational/test commands.
 
-Build with `npm run build`. Start the compiled API with `npm start`. Serve the browser build separately with a same-origin `/api` reverse proxy. Production requires HTTPS, deployment secrets, backups and process supervision. See the local setup and architecture decision for deployment boundaries.
+Build with `npm run build`. Start the compiled production app with `npm start`. It serves the browser build and the API from the same HTTPS origin. See the [Hostinger deployment settings](docs/operations/hostinger.md) and local setup for production configuration.
 
 ## Repository
 

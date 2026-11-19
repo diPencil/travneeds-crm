@@ -5,6 +5,7 @@ import path from 'path';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: { outDir: 'dist/web' },
   server: {
     host: '127.0.0.1',
     strictPort: true,

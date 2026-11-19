@@ -13,7 +13,7 @@
     "dev:api": "tsx watch server/src/index.ts",
     "build:web": "vite build",
     "build:api": "tsc -p server/tsconfig.build.json",
-    "start": "node dist/server/server/src/index.js",
+    "start": "node server.js",
     "test": "tsx --test server/tests/foundation.test.ts server/tests/finance.test.ts server/tests/settings.test.ts server/tests/quotations.test.ts && tsx docs/scripts/test-core-integration.ts",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "setup:local": "tsx docs/scripts/configure-local.ts",

@@ -3,8 +3,9 @@ import { env } from './config/env.js';
 import { checkDatabase, pool } from './database/pool.js';
 
 await checkDatabase();
-const server = app.listen(env.API_PORT, env.API_HOST, () => {
-  console.log(`Travneeds API listening on http://${env.API_HOST}:${env.API_PORT}`);
+const port = env.PORT ?? env.API_PORT;
+const server = app.listen(port, env.API_HOST, () => {
+  console.log(`Travneeds listening on http://${env.API_HOST}:${port}`);
 });
 server.requestTimeout = 15000;
 server.headersTimeout = 10000;

@@ -33,6 +33,7 @@ To set up automatic translation, enable the Cloud Translation API and billing in
 | --- | --- |
 | GET/POST /api/public/inbox/:shareId | Share token required. Same-origin writes, idempotent message key and rate limits. |
 | GET /api/inbox, GET /api/inbox/:id, GET/POST /api/inbox/:id/messages, PATCH /api/inbox/:id | Staff inbox, direct conversation lookup, message history/replies, mark read, close/reopen. Owners see their quotation threads. Social threads are in the admin queue. |
+| PATCH /api/inbox/:id/customer | Admin-only link or unlink for a social thread, with CSRF and the previous linked customer ID to prevent stale changes. Existing messages follow the explicit link into Customer File. |
 | GET/POST /api/webhooks/meta/:channel | Provider challenge verification or HMAC-SHA256 validation of the exact body. Scoped to the channel's configured provider account. |
 | GET /api/emails | Admin-wide or sender-only delivery history, filter and pagination. |
 | POST /api/emails/quotation/:id | Uses a valid current share, stored customer email, request key and optional PDF. An SMTP acceptance is recorded separately from failed or uncertain delivery. |
@@ -41,7 +42,7 @@ Inbox web chat polls every five seconds while a conversation is open. Meta adapt
 
 ## Deployment and provider setup
 
-- Set the HTTPS app origin and preserve the installation encryption key in the deployment secret store. Keep a backup of the database, encryption key and private `server/storage/quotation-media` volume. Serve `dist` and proxy `/api` to the Node service. Make public branding assets and the packaged fonts available to API workers. Set `PDF_CHROMIUM_PATH` if the deployment requires a custom supported Chromium path.
+- Set the HTTPS app origin and preserve the installation encryption key in the deployment secret store. Back up the database, encryption key and private quotation media directory. In production the Node process serves `dist/web` and `/api`. Make public branding assets and the packaged fonts available to API workers. Set `QUOTATION_MEDIA_DIRECTORY` to a persistent writable path and set `PDF_CHROMIUM_PATH` if the deployment requires a custom supported Chromium path.
 - SMTP requires a public IPv4 endpoint on port 465, 587 or 2525 with verified TLS or STARTTLS. Incoming-mail fields are optional and do not synchronize IMAP. Configure Google Cloud Translation separately from Google Login.
 - Register `APP_ORIGIN/api/auth/google/callback` as the authorized OAuth redirect URI. Staff sign in with their existing CRM credentials and link their verified matching Google email from Profile. Google login validates PKCE, state and nonce and issues the existing CRM session cookie.
 - Configure channel account ID, Graph API version, app secret, webhook verification token and channel access token in Settings. Instagram uses Instagram Login for an eligible professional account. Messenger uses the Facebook Page account. WhatsApp's channel account ID is the phone-number ID and its business ID is the WABA ID. Subscribe each to its own Settings-displayed webhook endpoint using Meta's tools. Live channel permissions, review and messaging are controlled by Meta.

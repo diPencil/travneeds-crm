@@ -45,7 +45,7 @@ npm run build
 npm start
 ```
 
-The API entry point is `dist/server/server/src/index.js`. Serve the browser build separately, with `/api` routed to the backend under the same origin. Production requires HTTPS and `NODE_ENV=production`, deployment secrets, backups and process supervision. Vite preview is a local inspection command.
+The compiled entry point is `dist/server/server/src/index.js`, loaded by `server.js`. With `NODE_ENV=production` the process serves `dist/web` and the API from the same HTTPS origin. Production requires deployment secrets, backups and process supervision. Vite preview is a local inspection command.
 
 ## XAMPP recovery
 
