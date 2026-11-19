@@ -1,5 +1,6 @@
 import { PublicQuotationChat } from '../inbox/PublicQuotationChat';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { ApiError } from '../../lib/http/api';
 import { useParams } from 'react-router-dom';
 import { FileDown } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
@@ -23,6 +24,8 @@ export function PublicQuotationPage() {
   } | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [printFallback, setPrintFallback] = useState(false);
+  const printFrame = useRef<HTMLIFrameElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
   useEffect(() => {
     let current = true;
@@ -51,13 +54,25 @@ export function PublicQuotationPage() {
   async function download() {
     if (!data || busy) return;
     setBusy(true);
+    setPrintFallback(false);
+    setError('');
     try {
       await downloadQuotationPdf(
         `/public/quotations/${shareId}/pdf?locale=${language}`,
         `quotation-${data.reference}-${language}.pdf`,
         token,
       );
-    } catch {
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.code === 'PDF_ENGINE_UNAVAILABLE') {
+        setPrintFallback(true);
+        setError(
+          text(
+            'Choose Print / Save PDF to save this quotation from your browser.',
+            'اختار طباعة / حفظ PDF عشان تحفظ العرض من المتصفح.',
+          ),
+        );
+        return;
+      }
       setError(text('Could not download the PDF. Please retry.', 'تعذّر تحميل PDF. حاول مرة أخرى.'));
     } finally {
       setBusy(false);
@@ -102,6 +117,11 @@ export function PublicQuotationPage() {
             {error}
           </p>
         )}
+        {printFallback && data && (
+          <Button variant="outline" onClick={() => printFrame.current?.contentWindow?.print()}>
+            {text('Print / Save PDF', 'طباعة / حفظ PDF')}
+          </Button>
+        )}
         {!data && !error && (
           <p role="status">{text('Loading quotation…', 'جارٍ تحميل الكوتيشن…')}</p>
         )}
@@ -120,6 +140,7 @@ export function PublicQuotationPage() {
           <QuotationFrame
             html={data.html}
             title={language === 'ar' ? 'تفاصيل الكوتيشن' : 'Quotation details'}
+            printFrame={printFrame}
           />
         )}
       </div>

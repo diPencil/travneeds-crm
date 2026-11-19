@@ -4,6 +4,8 @@ The local XAMPP database passed `/api/health` both directly and through the Vite
 
 `CORE_TEST_PDF=1 npm run check` enables the Chromium-backed PDF assertions in addition to formatting, lint, TypeScript, tests and both builds. The isolated scenario checks bilingual persistence, link revocation, ownership, two actual PDF responses, chat from the same link, booking retry safety and the change in Finance amounts on confirmation and cancellation. The Meta test uses a signed local webhook fixture. It covers verification challenge, signature rejection, business account scoping and redelivery handling.
 
+The deployment installer downloaded the matching Chrome Headless Shell and produced PDFs in the isolated suite without an explicit executable override. Chromium also verified the quotation print option after a simulated unavailable renderer. The production Hostinger runtime still needs a PDF download check after redeploying.
+
 Two Chromium-generated single-page previews were rasterized with PyMuPDF and inspected. Their Arabic/English text was extractable, and the Arabic preview rendered the title, body and pricing with RTL direction. The integration tests also assert the download content type, PDF header and populated files in both locales. The browser automation service timed out before interactive screen review. No live WhatsApp, Messenger, Instagram, SMTP, translation or Google OAuth account was used. External acceptance depends on the configured provider and authorized test accounts. The Vite build reported large existing entry and chart chunks.
 
 ## Local browser startup regression

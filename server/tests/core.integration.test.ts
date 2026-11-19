@@ -284,8 +284,33 @@ test(
             response.request().method() === 'POST',
         );
         await page.locator('::-p-aria(Save Draft[role="button"])').click();
-        assert.equal((await draftSaved).status(), 201);
+        const savedDraft = await draftSaved;
+        assert.equal(savedDraft.status(), 201);
+        const draft = (await savedDraft.json()) as { id: string };
         await page.waitForSelector('[role="status"] ::-p-text(Draft saved.)', { visible: true });
+        await page.setRequestInterception(true);
+        page.on('request', (incoming) => {
+          if (new URL(incoming.url()).pathname === `/api/quotations/${draft.id}/pdf`) {
+            void incoming.respond({
+              status: 503,
+              contentType: 'application/json',
+              body: JSON.stringify({ error: { code: 'PDF_ENGINE_UNAVAILABLE' } }),
+            });
+          } else {
+            void incoming.continue();
+          }
+        });
+        await page.goto(new URL(`/quotations/${draft.id}`, origin).href, {
+          waitUntil: 'domcontentloaded',
+        });
+        await page.locator('::-p-aria(Download PDF[role="button"])').click();
+        await page.waitForSelector('::-p-aria(Print / Save PDF[role="button"])', { visible: true });
+        await page.waitForSelector(
+          'iframe[title="Quotation presentation"][sandbox*="allow-modals"]',
+        );
+        await page.goto(new URL(`/quotations/${draft.id}/edit`, origin).href, {
+          waitUntil: 'domcontentloaded',
+        });
         await page.locator('#quotation-builder-timeline button[data-step="hotels"]').click();
         await page.locator('::-p-aria(Add hotel stay[role="button"])').click();
         await page.locator('button[aria-label="4 stars"]').click();

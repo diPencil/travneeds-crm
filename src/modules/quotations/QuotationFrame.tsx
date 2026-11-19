@@ -1,11 +1,24 @@
-import { useState } from 'react';
-export function QuotationFrame({ html, title }: { html: string; title: string }) {
+import { useState, type Ref } from 'react';
+export function QuotationFrame({
+  html,
+  title,
+  printFrame,
+}: {
+  html: string;
+  title: string;
+  printFrame?: Ref<HTMLIFrameElement>;
+}) {
   const [height, setHeight] = useState(1200);
   return (
     <iframe
+      ref={printFrame}
       title={title}
       srcDoc={html}
-      sandbox="allow-same-origin allow-popups"
+      sandbox={
+        printFrame
+          ? 'allow-same-origin allow-popups allow-modals'
+          : 'allow-same-origin allow-popups'
+      }
       referrerPolicy="no-referrer"
       className="w-full rounded-2xl border-0 bg-white"
       style={{ height }}

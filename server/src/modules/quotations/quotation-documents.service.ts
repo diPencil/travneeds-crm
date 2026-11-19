@@ -1,7 +1,9 @@
 import { isUploadedBrandAsset, readBrandAsset } from '../settings/brand-assets.service.js';
 import { readFile, realpath, access } from 'node:fs/promises';
 import path from 'node:path';
-import puppeteer from 'puppeteer-core';
+import { Browser, computeExecutablePath, detectBrowserPlatform } from '@puppeteer/browsers';
+import puppeteer, { type LaunchOptions } from 'puppeteer-core';
+import { PUPPETEER_REVISIONS } from 'puppeteer-core/internal/revisions.js';
 import type { QuotationDocument } from '../../../../shared/quotations/quotation.contracts.js';
 import { quotationDocumentHtml } from '../../../../shared/quotations/quotation-document-html.js';
 import { env } from '../../config/env.js';
@@ -75,7 +77,7 @@ export async function renderQuotationHtml(document: QuotationDocument, locale: '
     await brandLogo(document.branding.logoUrl),
   );
 }
-async function chromiumExecutable(): Promise<string> {
+async function chromiumLaunchOptions(): Promise<LaunchOptions> {
   const candidates = env.PDF_CHROMIUM_PATH
     ? [env.PDF_CHROMIUM_PATH]
     : process.platform === 'win32'
@@ -84,10 +86,25 @@ async function chromiumExecutable(): Promise<string> {
           'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
         ]
       : ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'];
-  for (const candidate of candidates) {
+  const platform = detectBrowserPlatform();
+  const bundled =
+    platform &&
+    computeExecutablePath({
+      browser: Browser.CHROMEHEADLESSSHELL,
+      buildId: PUPPETEER_REVISIONS['chrome-headless-shell'],
+      cacheDir: path.resolve('dist/pdf-browser'),
+      platform,
+    });
+  const installed = !env.PDF_CHROMIUM_PATH && bundled ? [bundled, ...candidates] : candidates;
+  for (const candidate of installed) {
     try {
       await access(candidate);
-      return candidate;
+      return {
+        executablePath: candidate,
+        headless: candidate === bundled ? 'shell' : true,
+        timeout: 15000,
+        args: ['--disable-dev-shm-usage'],
+      };
     } catch {
       /* Try the next explicitly supported installation path. */
     }
@@ -103,11 +120,9 @@ export async function renderQuotationPdf(
   activeRenders++;
   try {
     const html = await renderQuotationHtml(document, locale);
-    const browser = await puppeteer.launch({
-      executablePath: await chromiumExecutable(),
-      headless: true,
-      timeout: 15000,
-      args: ['--disable-dev-shm-usage'],
+    const options = await chromiumLaunchOptions();
+    const browser = await puppeteer.launch(options).catch(() => {
+      throw new HttpError(503, 'PDF_ENGINE_UNAVAILABLE');
     });
     try {
       const page = await browser.newPage();

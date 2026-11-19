@@ -1,5 +1,5 @@
 import { SendQuotationEmail } from '../emails/SendQuotationEmail';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { FileDown, Pencil, Share2, CheckCircle2 } from 'lucide-react';
 import type { QuotationDocument } from '../../../shared/quotations/quotation.contracts';
@@ -48,6 +48,8 @@ export function QuotationDetailsPage() {
   );
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [printFallback, setPrintFallback] = useState(false);
+  const printFrame = useRef<HTMLIFrameElement>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [url, setUrl] = useState('');
   const [expiry, setExpiry] = useState(() =>
@@ -122,12 +124,23 @@ export function QuotationDetailsPage() {
     if (!document || busy) return;
     setBusy(true);
     setFeedback('');
+    setPrintFallback(false);
     try {
       await downloadQuotationPdf(
         `/quotations/${id}/pdf?version=${document.version}&locale=${language}`,
         `quotation-${document.reference}-${language}.pdf`,
       );
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'PDF_ENGINE_UNAVAILABLE') {
+        setPrintFallback(true);
+        setFeedback(
+          text(
+            'Choose Print / Save PDF to save this quotation from your browser.',
+            'اختار طباعة / حفظ PDF عشان تحفظ العرض من المتصفح.',
+          ),
+        );
+        return;
+      }
       setFeedback(
         text(
           'Could not prepare the PDF. Retry or ask an administrator to check the PDF service.',
@@ -193,6 +206,11 @@ export function QuotationDetailsPage() {
           {feedback}
         </p>
       )}
+      {printFallback && presentation.data && !presentation.error && (
+        <Button variant="outline" onClick={() => printFrame.current?.contentWindow?.print()}>
+          {text('Print / Save PDF', 'طباعة / حفظ PDF')}
+        </Button>
+      )}
       {document && (
         <>
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center">
@@ -244,6 +262,7 @@ export function QuotationDetailsPage() {
             <QuotationFrame
               html={presentation.data.html}
               title={text('Quotation presentation', 'عرض الكوتيشن')}
+              printFrame={printFrame}
             />
           )}
         </>

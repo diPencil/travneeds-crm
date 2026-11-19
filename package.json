@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "concurrently --kill-others-on-fail -n api,web \"npm:dev:api\" \"npm:dev:web\"",
     "build": "npm run build:web && npm run build:api",
+    "build:hostinger": "npm run build && npm run pdf:install-browser",
+    "pdf:install-browser": "node docs/scripts/install-pdf-browser.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit && tsc -p server/tsconfig.json --noEmit",
@@ -26,6 +28,7 @@
   "dependencies": {
     "@fontsource/tajawal": "^5.3.0",
     "@lottiefiles/dotlottie-react": "^0.19.8",
+    "@puppeteer/browsers": "3.2.7",
     "@tiptap/extension-text-align": "^3.34.0",
     "@tiptap/react": "^3.34.0",
     "@tiptap/starter-kit": "^3.34.0",
